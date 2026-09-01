@@ -99,5 +99,8 @@ def admin():
     orders=conn.execute("SELECT orders.*,products.name product_name FROM orders LEFT JOIN products ON orders.product_id=products.id ORDER BY orders.created_at DESC").fetchall(); conn.close()
     return render_template("admin.html",products=products,orders=orders)
 
-if __name__=="__main__":
-    init_db(); app.run(debug=True)
+# Initialise database when the application starts
+init_db()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
