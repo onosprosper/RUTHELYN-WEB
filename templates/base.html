@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Ruthelyn Collections — elegant fashion, shoes, bags, jewellery and accessories.">
+  <title>{% block title %}RUTHELYN COLLECTIONS — Luxury Fashion{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="announcement">WORLDWIDE STYLE · CURATED IN NIGERIA · SHOP WITH CONFIDENCE</div>
+  <header class="site-header">
+    <div class="header-inner">
+      <button class="menu-toggle" aria-label="Open menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
+      <a class="brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ruthelyn Collections">
+        <span><b>RUTHELYN</b><small>COLLECTIONS</small></span>
+      </a>
+      <nav class="main-nav">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('shop') }}">Shop</a>
+        <a href="{{ url_for('shop', category='Luxury Wears') }}">Wears</a>
+        <a href="{{ url_for('shop', category='Shoes') }}">Shoes</a>
+        <a href="{{ url_for('shop', category='Bags') }}">Bags</a>
+        <a href="{{ url_for('shop', category='Jewelry & Accessories') }}">Accessories</a>
+      </nav>
+      <div class="header-actions">
+        <a href="{{ url_for('shop') }}" aria-label="Search">⌕</a>
+        <a href="{{ url_for('shop') }}" aria-label="Shopping bag">Bag</a>
+      </div>
+    </div>
+  </header>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <section class="social-strip">
+    <div>
+      <span class="eyebrow">STAY IN THE LOOP</span>
+      <h2>Follow Ruthelyn Collections</h2>
+      <p>New drops, styling inspiration and behind-the-scenes moments.</p>
+    </div>
+    <div class="social-links">
+      <a href="https://www.tiktok.com/@ruth2nicee" target="_blank" rel="noopener">TikTok <span>@ruth2nicee</span></a>
+      <a href="https://www.facebook.com/share/17u6f8tZXQ/" target="_blank" rel="noopener">Facebook <span>Follow us</span></a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">RUTHELYN COLLECTIONS</div>
+        <p>Elevated fashion for women who want to look confident, polished and unforgettable.</p>
+      </div>
+      <div>
+        <h4>SHOP</h4>
+        <a href="{{ url_for('shop') }}">All Products</a>
+        <a href="{{ url_for('shop', category='Luxury Wears') }}">Luxury Wears</a>
+        <a href="{{ url_for('shop', category='Shoes') }}">Shoes</a>
+        <a href="{{ url_for('shop', category='Bags') }}">Bags</a>
+      </div>
+      <div>
+        <h4>CONNECT</h4>
+        <a href="https://www.tiktok.com/@ruth2nicee" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.facebook.com/share/17u6f8tZXQ/" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://wa.me/2348125506022" target="_blank" rel="noopener">WhatsApp: 08125506022</a>
+      </div>
+      <div>
+        <h4>VISIT / CONTACT</h4>
+        <p>1 Olusegun Street,<br>Behind IBA Estate, Lagos</p>
+        <a href="tel:+2348125506022">+234 812 550 6022</a>
+      </div>
+    </div>
+    <div class="copyright">© 2026 Ruthelyn Collections. All rights reserved.</div>
+  </footer>
+
+  <a class="whatsapp-float" href="https://wa.me/2348125506022?text=Hello%20Ruthelyn%20Collections%2C%20I%20would%20like%20to%20make%20an%20enquiry." target="_blank" rel="noopener">WhatsApp</a>
+  <script>
+    function toggleChat(){
+      const x=document.getElementById('chat');
+      x.classList.toggle('open');
+    }
+    function sendChat(){
+      const i=document.getElementById('chatinput'), m=i.value.trim();
+      if(!m) return;
+      const lower=m.toLowerCase();
+      let r='Thanks for reaching out. Please use WhatsApp for the fastest response: 08125506022.';
+      if(/size|shoe|dress/.test(lower)) r='Available sizes depend on the item. Open the product page to see the available sizes.';
+      if(/pay|payment/.test(lower)) r='You can choose WhatsApp ordering or Bank Transfer / Manual Confirmation at checkout.';
+      if(/delivery|deliver/.test(lower)) r='Delivery details are collected at checkout. For a delivery quote, contact us on WhatsApp.';
+      document.getElementById('msgs').insertAdjacentHTML('beforeend','<div class="chat-msg"><b>You:</b> '+m.replace(/[<>]/g,'')+'</div><div class="chat-msg"><b>Support:</b> '+r+'</div>');
+      i.value='';
+    }
+  </script>
+  <div class="chat-panel" id="chat">
+    <div class="chat-head"><b>Ruthelyn Support</b><button onclick="toggleChat()">×</button></div>
+    <div class="chat-body" id="msgs"><div class="chat-msg">Hello! Ask us about sizes, payment or delivery.</div></div>
+    <div class="chat-input"><input id="chatinput" placeholder="Type your question" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Send</button></div>
+  </div>
+  <button class="chat-trigger" onclick="toggleChat()">Chat with us</button>
+</body>
+</html>

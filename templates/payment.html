@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Order Received — RUTHELYN COLLECTIONS{% endblock %}
+{% block content %}
+<main class="confirmation">
+  <span class="eyebrow">THANK YOU</span><h1>Your order is on its way.</h1>
+  <p>Thank you, <b>{{ customer_name }}</b>. We have recorded your order request.</p>
+  <div class="order-card"><div><span>PRODUCT</span><b>{{ product.name }}</b></div><div><span>SIZE</span><b>{{ size or "Not selected" }}</b></div><div><span>QUANTITY</span><b>{{ quantity }}</b></div><div><span>TOTAL</span><b>₦{{ "{:,.0f}".format(amount) }}</b></div></div>
+  {% if payment_method=="Bank Transfer / Manual Confirmation" %}<div class="bank-box"><h3>Bank Transfer Details</h3><p><b>Bank:</b> First Bank</p><p><b>Account Name:</b> RUTHELYN COLLECTIONS</p><p><b>Account Number:</b> 2041432714</p></div>{% endif %}
+  <a class="btn btn-dark" href="https://wa.me/2348125506022?text=Hello%20RUTHELYN%20COLLECTIONS%2C%20I%20want%20to%20confirm%20my%20order%20and%20payment." target="_blank">CONFIRM ON WHATSAPP</a>
+  <a class="text-link" href="{{ url_for('shop') }}">Continue shopping →</a>
+</main>
+{% endblock %}

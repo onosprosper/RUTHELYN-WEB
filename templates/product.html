@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — RUTHELYN COLLECTIONS{% endblock %}
+{% block content %}
+<section class="product-page">
+  <div class="product-gallery">
+    {% if product.image %}<img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}">{% else %}<div class="image-placeholder large">RUTHELYN</div>{% endif %}
+  </div>
+  <div class="product-detail">
+    <span class="eyebrow">{{ product.category }}</span>
+    <h1>{{ product.name }}</h1>
+    <div class="product-price">₦{{ "{:,.0f}".format(product.price) }} {% if product.old_price %}<del>₦{{ "{:,.0f}".format(product.old_price) }}</del>{% endif %}</div>
+    <p class="product-description">{{ product.description or "A carefully selected Ruthelyn Collections piece designed to bring elegance and confidence to your wardrobe." }}</p>
+    <div class="detail-rule"></div>
+    <form method="post" action="{{ url_for('checkout', product_id=product.id) }}">
+      <label>Full Name</label><input name="customer_name" required>
+      <label>Phone Number</label><input name="phone" required>
+      <label>Delivery Address</label><textarea name="address" required></textarea>
+      {% if sizes %}<label>Size</label><select name="size" required><option value="">Choose size</option>{% for size in sizes %}<option value="{{ size }}">Size {{ size }}</option>{% endfor %}</select>{% endif %}
+      <label>Quantity</label><input type="number" name="quantity" value="1" min="1">
+      <label>Payment</label><select name="payment_method"><option>Pay on WhatsApp</option><option>Bank Transfer / Manual Confirmation</option></select>
+      <button class="btn btn-dark full" type="submit">ORDER THIS PIECE</button>
+    </form>
+    <div class="service-notes"><div><b>Secure ordering</b><span>Your details are used to process your order.</span></div><div><b>Need help?</b><span>Chat on WhatsApp: 08125506022</span></div></div>
+  </div>
+</section>
+<section class="section product-bottom"><span class="eyebrow">MORE TO LOVE</span><h2>Explore the collection.</h2><a class="btn btn-outline" href="{{ url_for('shop') }}">CONTINUE SHOPPING</a></section>
+{% endblock %}

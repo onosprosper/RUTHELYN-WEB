@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Shop — RUTHELYN COLLECTIONS{% endblock %}
+{% block content %}
+<section class="shop-hero"><span class="eyebrow">RUTHELYN COLLECTIONS</span><h1>The Shop</h1><p>Explore the latest pieces, selected to elevate your wardrobe.</p></section>
+<section class="section shop-section">
+  <form class="shop-filter" method="get">
+    <div class="search-box"><span>⌕</span><input name="q" value="{{ search }}" placeholder="Search products..."></div>
+    <select name="category">
+      <option value="">All categories</option>
+      {% for c in ["Luxury Wears","Shoes","Bags","Jewelry & Accessories"] %}<option value="{{ c }}" {% if category==c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-dark" type="submit">FILTER</button>
+  </form>
+  <div class="shop-result"><span>{{ products|length }} item{% if products|length != 1 %}s{% endif %}</span>{% if search or category %}<a href="{{ url_for('shop') }}">Clear filters ×</a>{% endif %}</div>
+  <div class="product-grid">
+    {% for p in products %}
+    <a class="product-card" href="{{ url_for('product', product_id=p.id) }}">
+      <div class="product-image">{% if p.image %}<img src="{{ url_for('static', filename='uploads/' + p.image) }}" alt="{{ p.name }}">{% else %}<div class="image-placeholder">RUTHELYN</div>{% endif %}{% if p.old_price %}<span class="sale-tag">SALE</span>{% endif %}</div>
+      <div class="product-meta"><span>{{ p.category }}</span><h3>{{ p.name }}</h3><p>₦{{ "{:,.0f}".format(p.price) }} {% if p.old_price %}<del>₦{{ "{:,.0f}".format(p.old_price) }}</del>{% endif %}</p></div>
+    </a>
+    {% else %}<div class="empty-state"><h3>No products found.</h3><p>Try another search or category.</p></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Admin — RUTHELYN COLLECTIONS{% endblock %}
+{% block content %}
+<main class="section admin-page">
+  <span class="eyebrow">STORE MANAGEMENT</span><h1>Admin Dashboard</h1>
+  <div class="admin-card"><h2>Add product</h2><form method="post" enctype="multipart/form-data" class="admin-form">
+    <input name="name" placeholder="Product name" required>
+    <select name="category"><option>Luxury Wears</option><option>Shoes</option><option>Bags</option><option>Jewelry & Accessories</option></select>
+    <input type="number" name="price" placeholder="Price" required><input type="number" name="old_price" placeholder="Old price">
+    <input name="sizes" placeholder="Sizes, e.g. S,M,L or 38,39,40">
+    <textarea name="description" placeholder="Product description"></textarea><input type="file" name="image" accept="image/*">
+    <label class="check"><input type="checkbox" name="featured"> Featured product</label><button class="btn btn-dark" type="submit">ADD PRODUCT</button>
+  </form></div>
+  <div class="admin-card"><h2>Products</h2><div class="admin-table-wrap"><table><tr><th>Product</th><th>Category</th><th>Sizes</th><th>Price</th></tr>{% for p in products %}<tr><td>{{p.name}}</td><td>{{p.category}}</td><td>{{p.sizes}}</td><td>₦{{"{:,.0f}".format(p.price)}}</td></tr>{% endfor %}</table></div></div>
+  <div class="admin-card"><h2>Customer Orders</h2><div class="admin-table-wrap"><table><tr><th>Product</th><th>Customer</th><th>Size</th><th>Amount</th><th>Payment</th></tr>{% for o in orders %}<tr><td>{{o.product_name}}</td><td>{{o.customer_name}}<br>{{o.phone}}</td><td>{{o.size}}</td><td>₦{{"{:,.0f}".format(o.amount)}}</td><td>{{o.payment_method}}</td></tr>{% endfor %}</table></div></div>
+</main>
+{% endblock %}
