@@ -88,7 +88,6 @@ def checkout(product_id):
         return redirect("https://wa.me/"+WHATSAPP_NUMBER+"?text="+urllib.parse.quote(msg))
     return render_template("payment.html",product=product,amount=amount,customer_name=name,size=size,quantity=quantity,payment_method=method)
 
-@app.route("/admin",methods=["GET","POST"])
 # =========================================================
 # ADMIN LOGIN PROTECTION
 # =========================================================
@@ -96,16 +95,17 @@ def checkout(product_id):
 def admin_required(view_function):
     @wraps(view_function)
     def wrapped_view(*args, **kwargs):
+
         if not session.get("admin_logged_in"):
             return redirect(url_for("admin_login"))
+
         return view_function(*args, **kwargs)
 
     return wrapped_view
 
 
-@app.route("/admin", methods=["GET", "POST"])
-@admin_required
-def admin():
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
 
     if request.method == "POST":
 
@@ -115,11 +115,10 @@ def admin():
         admin_username = os.environ.get("ADMIN_USERNAME")
         admin_password = os.environ.get("ADMIN_PASSWORD")
 
-        if (
-            username == admin_username
-            and password == admin_password
-        ):
+        if username == admin_username and password == admin_password:
+
             session["admin_logged_in"] = True
+
             return redirect(url_for("admin"))
 
         flash("Invalid username or password.")
@@ -133,22 +132,108 @@ def admin_logout():
     session.pop("admin_logged_in", None)
 
     return redirect(url_for("admin_login"))
-def admin():
-    if request.method=="POST":
-        image=request.files.get("image"); filename=None
-        if image and image.filename and allowed(image.filename):
-            ext=image.filename.rsplit(".",1)[1].lower(); filename=f"{uuid.uuid4().hex}.{ext}"
-            image.save(os.path.join(app.config["UPLOAD_FOLDER"],filename))
-        c=request.form["category"]; sizes=request.form.get("sizes","").strip() or default_sizes(c)
-        conn=db(); conn.execute("""INSERT INTO products(name,category,price,old_price,description,image,featured,sizes)
-        VALUES(?,?,?,?,?,?,?,?)""",(request.form["name"],c,request.form["price"],request.form.get("old_price") or None,request.form.get("description",""),filename,1 if request.form.get("featured") else 0,sizes)); conn.commit(); conn.close()
-        return redirect(url_for("admin"))
-    conn=db(); products=conn.execute("SELECT * FROM products ORDER BY created_at DESC").fetchall()
-    orders=conn.execute("SELECT orders.*,products.name product_name FROM orders LEFT JOIN products ON orders.product_id=products.id ORDER BY orders.created_at DESC").fetchall(); conn.close()
-    return render_template("admin.html",products=products,orders=orders)
 
-# Initialise database when the application starts
+
+# =========================================================
+# PROTECTED ADMIN DASHBOARD
+# =========================================================
+
+@app.route("/admin", methods=["GET", "POST"])
+@admin_required
+def admin():
+
+    if request.method == "POST":
+
+        image = request.files.get("image")
+        filename = None
+
+        if image and image.filename and allowed(image.filename):
+
+            ext = image.filename.rsplit(".", 1)[1].lower()
+
+            filename = f"{uuid.uuid4().hex}.{ext}"
+
+            image.save(
+                os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    filename
+                )
+            )
+
+        c = request.form["category"]
+
+        sizes = (
+            request.form.get("sizes", "").strip()
+            or default_sizes(c)
+        )
+
+        conn = db()
+
+        conn.execute("""
+            INSERT INTO products(
+                name,
+                category,
+                price,
+                old_price,
+                description,
+                image,
+                featured,
+                sizes
+            )
+            VALUES(?,?,?,?,?,?,?,?)
+        """, (
+            request.form["name"],
+            c,
+            request.form["price"],
+            request.form.get("old_price") or None,
+            request.form.get("description", ""),
+            filename,
+            1 if request.form.get("featured") else 0,
+            sizes
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("admin"))
+
+    conn = db()
+
+    products = conn.execute(
+        "SELECT * FROM products "
+        "ORDER BY created_at DESC"
+    ).fetchall()
+
+    orders = conn.execute("""
+        SELECT
+            orders.*,
+            products.name product_name
+        FROM orders
+        LEFT JOIN products
+            ON orders.product_id = products.id
+        ORDER BY orders.created_at DESC
+    """).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "admin.html",
+        products=products,
+        orders=orders
+    )
+
+
+# =========================================================
+# INITIALISE DATABASE
+# =========================================================
+
 init_db()
 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
