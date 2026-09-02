@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from functools import wraps
 import sqlite3, os, uuid, urllib.parse
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "ruthelyn-change-this-key"
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "temporary-ruthelyn-secret-key"
+)
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -85,6 +89,50 @@ def checkout(product_id):
     return render_template("payment.html",product=product,amount=amount,customer_name=name,size=size,quantity=quantity,payment_method=method)
 
 @app.route("/admin",methods=["GET","POST"])
+# =========================================================
+# ADMIN LOGIN PROTECTION
+# =========================================================
+
+def admin_required(view_function):
+    @wraps(view_function)
+    def wrapped_view(*args, **kwargs):
+        if not session.get("admin_logged_in"):
+            return redirect(url_for("admin_login"))
+        return view_function(*args, **kwargs)
+
+    return wrapped_view
+
+
+@app.route("/admin", methods=["GET", "POST"])
+@admin_required
+def admin():
+
+    if request.method == "POST":
+
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        admin_username = os.environ.get("ADMIN_USERNAME")
+        admin_password = os.environ.get("ADMIN_PASSWORD")
+
+        if (
+            username == admin_username
+            and password == admin_password
+        ):
+            session["admin_logged_in"] = True
+            return redirect(url_for("admin"))
+
+        flash("Invalid username or password.")
+
+    return render_template("admin_login.html")
+
+
+@app.route("/admin/logout")
+def admin_logout():
+
+    session.pop("admin_logged_in", None)
+
+    return redirect(url_for("admin_login"))
 def admin():
     if request.method=="POST":
         image=request.files.get("image"); filename=None
