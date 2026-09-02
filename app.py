@@ -184,18 +184,22 @@ def admin():
         image = request.files.get("image")
         filename = None
 
-        if image and image.filename and allowed(image.filename):
+      if image and image.filename:
 
-            ext = image.filename.rsplit(".", 1)[1].lower()
+    if not allowed(image.filename):
+        flash("Invalid image format. Please upload PNG, JPG, JPEG or WEBP.")
+        return redirect(url_for("admin"))
 
-            filename = f"{uuid.uuid4().hex}.{ext}"
+    ext = secure_filename(image.filename).rsplit(".", 1)[1].lower()
 
-            image.save(
-                os.path.join(
-                    app.config["UPLOAD_FOLDER"],
-                    filename
-                )
-            )
+    filename = f"{uuid.uuid4().hex}.{ext}"
+
+    image.save(
+        os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            filename
+        )
+    )
 
         c = request.form["category"]
 
