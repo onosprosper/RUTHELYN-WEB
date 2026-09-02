@@ -44,8 +44,45 @@ def default_sizes(c):
 
 @app.route("/")
 def home():
-    conn=db(); products=conn.execute("SELECT * FROM products ORDER BY featured DESC, created_at DESC LIMIT 8").fetchall(); conn.close()
-    return render_template("index.html",products=products)
+    conn = db()
+
+    # Products for the normal featured-products section
+    featured = conn.execute("""
+        SELECT * FROM products
+        ORDER BY featured DESC, created_at DESC
+        LIMIT 8
+    """).fetchall()
+
+    # Get the latest uploaded product for each category
+    category_products = {}
+
+    categories = [
+        "Luxury Wears",
+        "Shoes",
+        "Bags",
+        "Jewellery & Accessories"
+    ]
+
+    for category in categories:
+        product = conn.execute("""
+            SELECT *
+            FROM products
+            WHERE category = ?
+              AND image IS NOT NULL
+              AND image != ''
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+        """, (category,)).fetchone()
+
+        category_products[category] = product
+
+    conn.close()
+
+    return render_template(
+        "index.html",
+        products=featured,
+        category_products=category_products
+    )
 
 @app.route("/shop")
 def shop():
