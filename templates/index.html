@@ -1,1149 +1,789 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <meta name="description"
-          content="RUTHELYN COLLECTIONS - Luxury wears, shoes, bags, jewellery and accessories.">
-
-    <title>RUTHELYN COLLECTIONS</title>
-
-    <style>
-
-        /* =====================================================
-           RESET
-        ===================================================== */
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f8f5f1;
-            color: #171513;
-            line-height: 1.5;
-        }
-
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        img {
-            max-width: 100%;
-            display: block;
-        }
-
-
-        /* =====================================================
-           HEADER
-        ===================================================== */
-
-        header {
-            width: 100%;
-            background: #f8f5f1;
-            border-bottom: 1px solid rgba(0,0,0,0.08);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav {
-            max-width: 1500px;
-            margin: auto;
-            padding: 22px 5%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 30px;
-        }
-
-        .logo {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 27px;
-            font-weight: 700;
-            letter-spacing: 2px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 35px;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .nav-links a {
-            transition: opacity .25s ease;
-        }
-
-        .nav-links a:hover {
-            opacity: .55;
-        }
-
-        .shop-button {
-            border-bottom: 1px solid #171513;
-            padding-bottom: 4px;
-        }
-
-
-        /* =====================================================
-           HERO
-        ===================================================== */
-
-        .hero {
-            min-height: 650px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 80px 20px;
-
-            background:
-                linear-gradient(
-                    rgba(248,245,241,.55),
-                    rgba(248,245,241,.85)
-                );
-        }
-
-        .hero-inner {
-            max-width: 900px;
-        }
-
-        .eyebrow {
-            font-size: 12px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            font-weight: 700;
-            margin-bottom: 25px;
-        }
-
-        .hero h1 {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: clamp(52px, 8vw, 105px);
-            line-height: .95;
-            font-weight: 400;
-            margin-bottom: 30px;
-        }
-
-        .hero p {
-            max-width: 600px;
-            margin: auto;
-            color: #625d57;
-            font-size: 17px;
-        }
-
-        .hero-button {
-            display: inline-block;
-            margin-top: 35px;
-            background: #171513;
-            color: white;
-            padding: 16px 32px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all .3s ease;
-        }
-
-        .hero-button:hover {
-            background: #4b4540;
-            transform: translateY(-2px);
-        }
-
-
-        /* =====================================================
-           CATEGORY SECTION
-        ===================================================== */
-
-        .category-section {
-            max-width: 1500px;
-            margin: auto;
-            padding: 100px 5%;
-        }
-
-        .section-top {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            margin-bottom: 45px;
-            gap: 30px;
-        }
-
-        .section-label {
-            font-size: 12px;
-            letter-spacing: 4px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #77716b;
-            margin-bottom: 25px;
-        }
-
-        .section-title {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: clamp(45px, 5vw, 70px);
-            line-height: 1;
-            font-weight: 400;
-        }
-
-        .view-all {
-            font-size: 13px;
-            border-bottom: 1px solid #171513;
-            padding-bottom: 5px;
-            white-space: nowrap;
-        }
-
-
-        /* =====================================================
-           CATEGORY GRID
-        ===================================================== */
-
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
-        .category-card {
-            position: relative;
-            height: 525px;
-            overflow: hidden;
-            background: #aaa098;
-            color: white;
-        }
-
-        .category-card-image {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform .7s ease;
-        }
-
-        .category-card:hover .category-card-image {
-            transform: scale(1.07);
-        }
-
-        .category-fallback {
-            position: absolute;
-            inset: 0;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    #d2c7ba,
-                    #81766c
-                );
-        }
-
-        .category-overlay {
-            position: absolute;
-            inset: 0;
-
-            background:
-                linear-gradient(
-                    to top,
-                    rgba(0,0,0,.82) 0%,
-                    rgba(0,0,0,.35) 45%,
-                    rgba(0,0,0,.05) 100%
-                );
-        }
-
-        .category-content {
-            position: absolute;
-            left: 32px;
-            right: 25px;
-            bottom: 30px;
-            z-index: 3;
-        }
-
-        .category-number {
-            display: block;
-            font-size: 12px;
-            letter-spacing: 3px;
-            margin-bottom: 20px;
-        }
-
-        .category-name {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 34px;
-            line-height: 1.1;
-            font-weight: 400;
-            margin-bottom: 20px;
-        }
-
-        .category-link {
-            font-size: 12px;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-
-
-        /* =====================================================
-           FEATURED PRODUCTS
-        ===================================================== */
-
-        .products-section {
-            max-width: 1500px;
-            margin: auto;
-            padding: 20px 5% 110px;
-        }
-
-        .products-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 45px;
-        }
-
-        .products-header h2 {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 55px;
-            font-weight: 400;
-        }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 25px;
-        }
-
-        .product-card {
-            background: white;
-            overflow: hidden;
-            transition: transform .3s ease;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .product-image {
-            height: 400px;
-            background: #e9e3dd;
-            overflow: hidden;
-        }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform .6s ease;
-        }
-
-        .product-card:hover .product-image img {
-            transform: scale(1.05);
-        }
-
-        .product-info {
-            padding: 20px;
-        }
-
-        .product-category {
-            color: #817a74;
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .product-name {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 23px;
-            margin-bottom: 10px;
-        }
-
-        .product-price {
-            font-size: 15px;
-            font-weight: 700;
-        }
-
-        .old-price {
-            margin-left: 8px;
-            color: #999;
-            text-decoration: line-through;
-            font-weight: 400;
-        }
-
-        .no-products {
-            padding: 60px;
-            text-align: center;
-            background: white;
-            color: #777;
-        }
-
-
-        /* =====================================================
-           ABOUT / BRAND SECTION
-        ===================================================== */
-
-        .brand-section {
-            background: #1d1a18;
-            color: white;
-            padding: 110px 5%;
-        }
-
-        .brand-inner {
-            max-width: 1100px;
-            margin: auto;
-            text-align: center;
-        }
-
-        .brand-label {
-            font-size: 12px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 30px;
-        }
-
-        .brand-title {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: clamp(45px, 6vw, 80px);
-            font-weight: 400;
-            line-height: 1;
-            margin-bottom: 30px;
-        }
-
-        .brand-text {
-            max-width: 700px;
-            margin: auto;
-            color: #d0cbc6;
-            font-size: 17px;
-        }
-
-
-        /* =====================================================
-           FOOTER
-        ===================================================== */
-
-        footer {
-            background: #f8f5f1;
-            padding: 70px 5% 30px;
-        }
-
-        .footer-inner {
-            max-width: 1500px;
-            margin: auto;
-        }
-
-        .footer-top {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 50px;
-            padding-bottom: 60px;
-        }
-
-        .footer-logo {
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 30px;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-        }
-
-        .footer-description {
-            max-width: 400px;
-            color: #716b65;
-        }
-
-        .footer-column h4 {
-            font-size: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-
-        .footer-column a,
-        .footer-column p {
-            display: block;
-            color: #716b65;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(0,0,0,.1);
-            padding-top: 25px;
-            display: flex;
-            justify-content: space-between;
-            color: #817a74;
-            font-size: 12px;
-        }
-
-
-        /* =====================================================
-           WHATSAPP BUTTON
-        ===================================================== */
-
-        .whatsapp-button {
-            position: fixed;
-            right: 25px;
-            bottom: 25px;
-            z-index: 2000;
-
-            width: 58px;
-            height: 58px;
-            border-radius: 50%;
-
-            background: #25D366;
-            color: white;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 25px;
-
-            box-shadow: 0 8px 25px rgba(0,0,0,.2);
-        }
-
-
-        /* =====================================================
-           MOBILE
-        ===================================================== */
-
-        @media (max-width: 1000px) {
-
-            .category-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .footer-top {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-
-        @media (max-width: 650px) {
-
-            .nav {
-                padding: 18px 20px;
-            }
-
-            .logo {
-                font-size: 20px;
-            }
-
-            .nav-links {
-                gap: 15px;
-                font-size: 10px;
-            }
-
-            .hero {
-                min-height: 550px;
-                padding: 60px 20px;
-            }
-
-            .hero h1 {
-                font-size: 55px;
-            }
-
-            .category-section,
-            .products-section {
-                padding-left: 20px;
-                padding-right: 20px;
-            }
-
-            .section-top,
-            .products-header {
-                display: block;
-            }
-
-            .view-all {
-                display: inline-block;
-                margin-top: 20px;
-            }
-
-            .category-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .category-card {
-                height: 500px;
-            }
-
-            .product-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .product-image {
-                height: 450px;
-            }
-
-            .footer-top {
-                grid-template-columns: 1fr;
-            }
-
-            .footer-bottom {
-                display: block;
-            }
-
-            .footer-bottom p {
-                margin-bottom: 10px;
-            }
-        }
-
-    </style>
-</head>
-
-
-<body>
-
-
-<!-- =========================================================
-     HEADER
-========================================================= -->
-
-<header>
-
-    <nav class="nav">
-
-        <a href="{{ url_for('home') }}" class="logo">
-            RUTHELYN
-        </a>
-
-        <div class="nav-links">
-
-            <a href="{{ url_for('home') }}">
-                Home
-            </a>
-
-            <a href="{{ url_for('shop') }}">
-                Shop
-            </a>
-
-            <a href="{{ url_for('shop') }}"
-               class="shop-button">
-                Shop Now →
-            </a>
-
-        </div>
-
-    </nav>
-
-</header>
-
-
-
-<!-- =========================================================
+{% extends "base.html" %}
+
+{% block title %}RUTHELYN COLLECTIONS — Luxury Fashion{% endblock %}
+
+{% block content %}
+
+<style>
+/* ================================
+   RUTHELYN HOMEPAGE
+================================ */
+
+.home-hero {
+    min-height: 72vh;
+    display: flex;
+    align-items: center;
+    padding: 80px 6%;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.80) 48%, rgba(255,255,255,0.15) 100%),
+        url("{{ url_for('static', filename='logo.jpg') }}");
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-content {
+    max-width: 650px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-eyebrow {
+    font-size: 12px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    display: block;
+}
+
+.hero-title {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(42px, 6vw, 82px);
+    line-height: 0.98;
+    margin: 0 0 25px;
+    letter-spacing: -2px;
+}
+
+.hero-text {
+    max-width: 520px;
+    font-size: 17px;
+    line-height: 1.8;
+    margin-bottom: 30px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.hero-button {
+    display: inline-block;
+    padding: 15px 28px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid #111;
+    transition: 0.25s ease;
+}
+
+.hero-button.primary {
+    background: #111;
+    color: #fff;
+}
+
+.hero-button.primary:hover {
+    background: #333;
+}
+
+.hero-button.secondary {
+    background: transparent;
+    color: #111;
+}
+
+.hero-button.secondary:hover {
+    background: #111;
+    color: #fff;
+}
+
+
+/* ================================
+   CATEGORY SECTION
+================================ */
+
+.home-section {
+    padding: 90px 6%;
+}
+
+.home-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.home-heading .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+}
+
+.home-heading h2 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(34px, 4vw, 52px);
+    margin: 8px 0 0;
+}
+
+.home-heading p {
+    max-width: 450px;
+    line-height: 1.7;
+}
+
+
+/* ================================
+   FOUR CATEGORY BOXES
+================================ */
+
+.category-grid-home {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.category-box-home {
+    position: relative;
+    min-height: 430px;
+    overflow: hidden;
+    background: #f3f1ee;
+    text-decoration: none;
+    color: #111;
+    display: flex;
+    align-items: flex-end;
+}
+
+.category-image-home {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.category-box-home:hover .category-image-home {
+    transform: scale(1.05);
+}
+
+.category-placeholder-home {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Playfair Display", serif;
+    font-size: 26px;
+    color: #888;
+}
+
+.category-overlay-home {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.72),
+        rgba(0,0,0,0.05) 70%
+    );
+}
+
+.category-content-home {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 30px;
+    color: #fff;
+}
+
+.category-number-home {
+    font-size: 12px;
+    letter-spacing: 2px;
+    opacity: 0.85;
+}
+
+.category-content-home h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 32px;
+    margin: 8px 0 12px;
+}
+
+.category-shop-home {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+}
+
+
+/* ================================
+   FEATURED PRODUCTS
+================================ */
+
+.featured-grid-home {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+}
+
+.featured-card-home {
+    text-decoration: none;
+    color: #111;
+    display: block;
+}
+
+.featured-image-home {
+    width: 100%;
+    aspect-ratio: 0.82;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+}
+
+.featured-info-home {
+    padding: 15px 2px;
+}
+
+.featured-info-home h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 18px;
+    margin: 0 0 7px;
+}
+
+.featured-category-home {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 8px;
+}
+
+.featured-price-home {
+    font-weight: 700;
+}
+
+
+/* ================================
+   BRAND STATEMENT
+================================ */
+
+.brand-statement-home {
+    padding: 100px 6%;
+    text-align: center;
+    background: #f5f2ed;
+}
+
+.brand-statement-home .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+}
+
+.brand-statement-home h2 {
+    max-width: 850px;
+    margin: 18px auto;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(34px, 5vw, 62px);
+    line-height: 1.1;
+}
+
+.brand-statement-home p {
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 900px) {
+
+    .home-hero {
+        min-height: 600px;
+        padding: 60px 6%;
+        background:
+            linear-gradient(
+                90deg,
+                rgba(255,255,255,0.96),
+                rgba(255,255,255,0.55)
+            ),
+            url("{{ url_for('static', filename='logo.jpg') }}");
+        background-size: cover;
+        background-position: center;
+    }
+
+    .category-grid-home {
+        grid-template-columns: 1fr;
+    }
+
+    .featured-grid-home {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .home-heading {
+        display: block;
+    }
+}
+
+@media (max-width: 550px) {
+
+    .home-hero {
+        min-height: 560px;
+    }
+
+    .hero-title {
+        font-size: 46px;
+    }
+
+    .hero-text {
+        font-size: 15px;
+    }
+
+    .category-box-home {
+        min-height: 360px;
+    }
+
+    .category-content-home h3 {
+        font-size: 27px;
+    }
+
+    .featured-grid-home {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .home-section {
+        padding: 65px 5%;
+    }
+}
+</style>
+
+
+<!-- =================================
      HERO
-========================================================= -->
+================================= -->
 
-<section class="hero">
+<section class="home-hero">
 
-    <div class="hero-inner">
+    <div class="hero-content">
 
-        <div class="eyebrow">
+        <span class="hero-eyebrow">
             RUTHELYN COLLECTIONS
-        </div>
+        </span>
 
-        <h1>
+        <h1 class="hero-title">
             Elegance<br>
-            without limits.
+            Made For You.
         </h1>
 
-        <p>
-            Discover carefully selected luxury wears, shoes,
-            bags, jewellery and accessories designed to make
-            every moment memorable.
+        <p class="hero-text">
+            Discover carefully selected fashion pieces, shoes, bags,
+            jewellery and accessories designed to help you look
+            confident, polished and unforgettable.
         </p>
 
-        <a href="{{ url_for('shop') }}"
-           class="hero-button">
-            Explore Collection
-        </a>
+        <div class="hero-buttons">
+
+            <a href="{{ url_for('shop') }}"
+               class="hero-button primary">
+                SHOP COLLECTION
+            </a>
+
+            <a href="{{ url_for('shop', category='Luxury Wears') }}"
+               class="hero-button secondary">
+                EXPLORE WEARS
+            </a>
+
+        </div>
 
     </div>
 
 </section>
 
+/* ================================
+   SHOP VIDEO
+================================ */
 
+.shop-video-section {
+    padding: 90px 6%;
+    background: #f8f6f2;
+}
 
-<!-- =========================================================
+.shop-video-heading {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 40px;
+}
+
+.shop-video-heading .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+}
+
+.shop-video-heading h2 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(36px, 5vw, 58px);
+    line-height: 1.1;
+    margin: 12px 0 15px;
+}
+
+.shop-video-heading p {
+    line-height: 1.8;
+    margin: 0 auto;
+}
+
+.shop-video-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    background: #111;
+}
+
+.shop-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 680px;
+    object-fit: cover;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+
+    .shop-video-section {
+        padding: 65px 5%;
+    }
+
+    .shop-video-container {
+        width: 100%;
+    }
+
+    .shop-video {
+        min-height: 400px;
+        object-fit: cover;
+    }
+
+}
+
+<!-- =================================
      SHOP BY CATEGORY
-========================================================= -->
+================================= -->
 
-<section class="category-section">
+<section class="home-section">
 
-    <div class="section-top">
+    <div class="home-heading">
 
         <div>
+            <span class="eyebrow">
+                SHOP BY CATEGORY
+            </span>
 
-            <div class="section-label">
-                Shop by category
-            </div>
-
-            <h2 class="section-title">
-                Find your next favourite.
+            <h2>
+                Find Your Style
             </h2>
-
         </div>
 
-        <a href="{{ url_for('shop') }}"
-           class="view-all">
-            View all →
-        </a>
+        <p>
+            Explore our carefully selected collections and discover
+            pieces that fit your personal style.
+        </p>
 
     </div>
 
 
-    <div class="category-grid">
+    <div class="category-grid-home">
 
 
-        <!-- =================================================
-             LUXURY WEARS
-        ================================================== -->
+        <!-- 01 LUXURY WEARS -->
 
-        {% set luxury = category_products["Luxury Wears"] %}
+        {% set wears = category_products.get("Luxury Wears") %}
 
-        <a href="{{ url_for('shop', category='Luxury Wears') }}"
-           class="category-card">
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Luxury Wears') }}">
 
-            {% if luxury and luxury.image %}
+            {% if wears and wears.image %}
 
                 <img
-                    src="{{ url_for('static', filename='uploads/' + luxury.image) }}"
-                    alt="{{ luxury.name }}"
-                    class="category-card-image"
+                    class="category-image-home"
+                    src="{{ url_for('static', filename='uploads/' + wears.image) }}"
+                    alt="{{ wears.name }}"
                 >
 
             {% else %}
 
-                <div class="category-fallback"></div>
+                <div class="category-placeholder-home">
+                    Luxury Wears
+                </div>
 
             {% endif %}
 
-            <div class="category-overlay"></div>
+            <div class="category-overlay-home"></div>
 
-            <div class="category-content">
+            <div class="category-content-home">
 
-                <span class="category-number">
+                <div class="category-number-home">
                     01
-                </span>
+                </div>
 
-                <h3 class="category-name">
+                <h3>
                     Luxury Wears
                 </h3>
 
-                <span class="category-link">
-                    Shop now →
-                </span>
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
 
             </div>
 
         </a>
 
 
+        <!-- 02 SHOES -->
 
-        <!-- =================================================
-             SHOES
-        ================================================== -->
+        {% set shoes = category_products.get("Shoes") %}
 
-        {% set shoes = category_products["Shoes"] %}
-
-        <a href="{{ url_for('shop', category='Shoes') }}"
-           class="category-card">
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Shoes') }}">
 
             {% if shoes and shoes.image %}
 
                 <img
+                    class="category-image-home"
                     src="{{ url_for('static', filename='uploads/' + shoes.image) }}"
                     alt="{{ shoes.name }}"
-                    class="category-card-image"
                 >
 
             {% else %}
 
-                <div class="category-fallback"></div>
+                <div class="category-placeholder-home">
+                    Shoes
+                </div>
 
             {% endif %}
 
-            <div class="category-overlay"></div>
+            <div class="category-overlay-home"></div>
 
-            <div class="category-content">
+            <div class="category-content-home">
 
-                <span class="category-number">
+                <div class="category-number-home">
                     02
-                </span>
+                </div>
 
-                <h3 class="category-name">
+                <h3>
                     Shoes
                 </h3>
 
-                <span class="category-link">
-                    Shop now →
-                </span>
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
 
             </div>
 
         </a>
 
 
+        <!-- 03 BAGS -->
 
-        <!-- =================================================
-             BAGS
-        ================================================== -->
+        {% set bags = category_products.get("Bags") %}
 
-        {% set bags = category_products["Bags"] %}
-
-        <a href="{{ url_for('shop', category='Bags') }}"
-           class="category-card">
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Bags') }}">
 
             {% if bags and bags.image %}
 
                 <img
+                    class="category-image-home"
                     src="{{ url_for('static', filename='uploads/' + bags.image) }}"
                     alt="{{ bags.name }}"
-                    class="category-card-image"
                 >
 
             {% else %}
 
-                <div class="category-fallback"></div>
+                <div class="category-placeholder-home">
+                    Bags
+                </div>
 
             {% endif %}
 
-            <div class="category-overlay"></div>
+            <div class="category-overlay-home"></div>
 
-            <div class="category-content">
+            <div class="category-content-home">
 
-                <span class="category-number">
+                <div class="category-number-home">
                     03
-                </span>
+                </div>
 
-                <h3 class="category-name">
+                <h3>
                     Bags
                 </h3>
 
-                <span class="category-link">
-                    Shop now →
-                </span>
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
 
             </div>
 
         </a>
 
 
+        <!-- 04 JEWELLERY & ACCESSORIES -->
 
-        <!-- =================================================
-             JEWELLERY & ACCESSORIES
-        ================================================== -->
+        {% set accessories = category_products.get("Jewellery & Accessories") %}
 
-        {% set jewellery = category_products["Jewellery & Accessories"] %}
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Jewellery & Accessories') }}">
 
-        <a href="{{ url_for('shop', category='Jewellery & Accessories') }}"
-           class="category-card">
-
-            {% if jewellery and jewellery.image %}
+            {% if accessories and accessories.image %}
 
                 <img
-                    src="{{ url_for('static', filename='uploads/' + jewellery.image) }}"
-                    alt="{{ jewellery.name }}"
-                    class="category-card-image"
+                    class="category-image-home"
+                    src="{{ url_for('static', filename='uploads/' + accessories.image) }}"
+                    alt="{{ accessories.name }}"
                 >
 
             {% else %}
 
-                <div class="category-fallback"></div>
+                <div class="category-placeholder-home">
+                    Jewellery & Accessories
+                </div>
 
             {% endif %}
 
-            <div class="category-overlay"></div>
+            <div class="category-overlay-home"></div>
 
-            <div class="category-content">
+            <div class="category-content-home">
 
-                <span class="category-number">
+                <div class="category-number-home">
                     04
-                </span>
+                </div>
 
-                <h3 class="category-name">
-                    Jewellery &<br>
-                    Accessories
+                <h3>
+                    Jewellery & Accessories
                 </h3>
 
-                <span class="category-link">
-                    Shop now →
-                </span>
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
 
             </div>
 
         </a>
-
 
     </div>
 
 </section>
 
 
-
-<!-- =========================================================
+<!-- =================================
      FEATURED PRODUCTS
-========================================================= -->
+================================= -->
 
-<section class="products-section">
+{% if products %}
 
-    <div class="products-header">
+<section class="home-section">
+
+    <div class="home-heading">
 
         <div>
 
-            <div class="section-label">
-                Our collection
-            </div>
+            <span class="eyebrow">
+                LATEST ARRIVALS
+            </span>
 
             <h2>
-                Featured pieces.
+                New In
             </h2>
 
         </div>
 
-        <a href="{{ url_for('shop') }}"
-           class="view-all">
-            Shop all →
-        </a>
-
-    </div>
-
-
-    {% if products %}
-
-        <div class="product-grid">
-
-            {% for product in products %}
-
-                <a href="{{ url_for('product', product_id=product.id) }}"
-                   class="product-card">
-
-                    <div class="product-image">
-
-                        {% if product.image %}
-
-                            <img
-                                src="{{ url_for('static', filename='uploads/' + product.image) }}"
-                                alt="{{ product.name }}"
-                            >
-
-                        {% else %}
-
-                            <div class="category-fallback"></div>
-
-                        {% endif %}
-
-                    </div>
-
-
-                    <div class="product-info">
-
-                        <div class="product-category">
-                            {{ product.category }}
-                        </div>
-
-                        <h3 class="product-name">
-                            {{ product.name }}
-                        </h3>
-
-                        <div class="product-price">
-
-                            ₦{{ "{:,.0f}".format(product.price) }}
-
-                            {% if product.old_price %}
-
-                                <span class="old-price">
-                                    ₦{{ "{:,.0f}".format(product.old_price) }}
-                                </span>
-
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-
-                </a>
-
-            {% endfor %}
-
-        </div>
-
-    {% else %}
-
-        <div class="no-products">
-
-            <p>
-                Our collection is being updated.
-                Please check back soon.
-            </p>
-
-        </div>
-
-    {% endif %}
-
-</section>
-
-
-
-<!-- =========================================================
-     BRAND SECTION
-========================================================= -->
-
-<section class="brand-section">
-
-    <div class="brand-inner">
-
-        <div class="brand-label">
-            RUTHELYN COLLECTIONS
-        </div>
-
-        <h2 class="brand-title">
-            Style that speaks for you.
-        </h2>
-
-        <p class="brand-text">
-            At RUTHELYN COLLECTIONS, we believe fashion is more
-            than what you wear. It is confidence, personality
-            and the freedom to express yourself beautifully.
+        <p>
+            Discover the latest pieces added to
+            Ruthelyn Collections.
         </p>
 
     </div>
 
-</section>
+
+    <div class="featured-grid-home">
+
+        {% for p in products %}
+
+        <a
+            class="featured-card-home"
+            href="{{ url_for('product', product_id=p.id) }}"
+        >
+
+            {% if p.image %}
+
+            <img
+                class="featured-image-home"
+                src="{{ url_for('static', filename='uploads/' + p.image) }}"
+                alt="{{ p.name }}"
+            >
+
+            {% else %}
+
+            <div class="featured-image-home"></div>
+
+            {% endif %}
 
 
+            <div class="featured-info-home">
 
-<!-- =========================================================
-     FOOTER
-========================================================= -->
-
-<footer>
-
-    <div class="footer-inner">
-
-        <div class="footer-top">
-
-
-            <div>
-
-                <div class="footer-logo">
-                    RUTHELYN
+                <div class="featured-category-home">
+                    {{ p.category }}
                 </div>
 
-                <p class="footer-description">
-                    Luxury wears, shoes, bags, jewellery and
-                    accessories carefully selected for you.
-                </p>
+                <h3>
+                    {{ p.name }}
+                </h3>
+
+                <div class="featured-price-home">
+                    ₦{{ "{:,.0f}".format(p.price|float) }}
+                </div>
 
             </div>
 
+        </a>
 
-            <div class="footer-column">
-
-                <h4>
-                    Shop
-                </h4>
-
-                <a href="{{ url_for('shop', category='Luxury Wears') }}">
-                    Luxury Wears
-                </a>
-
-                <a href="{{ url_for('shop', category='Shoes') }}">
-                    Shoes
-                </a>
-
-                <a href="{{ url_for('shop', category='Bags') }}">
-                    Bags
-                </a>
-
-                <a href="{{ url_for('shop', category='Jewellery & Accessories') }}">
-                    Jewellery & Accessories
-                </a>
-
-            </div>
-
-
-            <div class="footer-column">
-
-                <h4>
-                    Explore
-                </h4>
-
-                <a href="{{ url_for('home') }}">
-                    Home
-                </a>
-
-                <a href="{{ url_for('shop') }}">
-                    Shop
-                </a>
-
-            </div>
-
-
-            <div class="footer-column">
-
-                <h4>
-                    Contact
-                </h4>
-
-                <p>
-                    08125506022
-                </p>
-
-                <p>
-                    1 Olusegun Street,<br>
-                    Behind IBA Estate
-                </p>
-
-            </div>
-
-
-        </div>
-
-
-        <div class="footer-bottom">
-
-            <p>
-                © 2026 RUTHELYN COLLECTIONS.
-                All rights reserved.
-            </p>
-
-            <p>
-                Made with style.
-            </p>
-
-        </div>
+        {% endfor %}
 
     </div>
 
-</footer>
+
+    <div style="text-align:center; margin-top:45px;">
+
+        <a
+            href="{{ url_for('shop') }}"
+            class="hero-button primary"
+        >
+            VIEW ALL PRODUCTS
+        </a>
+
+    </div>
+
+</section>
+
+{% endif %}
 
 
+<!-- =================================
+     BRAND STATEMENT
+================================= -->
 
-<!-- =========================================================
-     WHATSAPP
-========================================================= -->
+<section class="brand-statement-home">
 
-<a
-    href="https://wa.me/2348125506022"
-    class="whatsapp-button"
-    target="_blank"
-    aria-label="Chat with RUTHELYN COLLECTIONS on WhatsApp"
->
-    ☎
-</a>
+    <span class="eyebrow">
+        RUTHELYN COLLECTIONS
+    </span>
+
+    <h2>
+        Fashion that makes you feel
+        confident, beautiful and unforgettable.
+    </h2>
+
+    <p>
+        From elegant wears to statement shoes, beautiful bags
+        and carefully selected accessories, Ruthelyn Collections
+        brings together fashion pieces for women who appreciate
+        quality, confidence and timeless style.
+    </p>
+
+</section>
 
 
-</body>
-</html>
+{% endblock %}
