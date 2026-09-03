@@ -170,6 +170,7 @@ def admin_logout():
 
     return redirect(url_for("admin_login"))
 
+
 # =========================================================
 # PROTECTED ADMIN DASHBOARD
 # =========================================================
@@ -180,61 +181,32 @@ def admin():
 
     if request.method == "POST":
 
-        # -----------------------------
-        # HANDLE PRODUCT IMAGE
-        # -----------------------------
-
         image = request.files.get("image")
         filename = None
 
-        if image and image.filename:
+        if image and image.filename and allowed(image.filename):
 
-            if not allowed(image.filename):
-                flash(
-                    "Invalid image format. Please upload PNG, JPG, JPEG or WEBP."
-                )
-                return redirect(url_for("admin"))
-
-            original_filename = secure_filename(image.filename)
-
-            if "." not in original_filename:
-                flash("Invalid image file.")
-                return redirect(url_for("admin"))
-
-            ext = original_filename.rsplit(".", 1)[1].lower()
+            ext = image.filename.rsplit(".", 1)[1].lower()
 
             filename = f"{uuid.uuid4().hex}.{ext}"
 
-            image_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                filename
+            image.save(
+                os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    filename
+                )
             )
 
-            image.save(image_path)
+        c = request.form["category"]
 
-        # -----------------------------
-        # PRODUCT CATEGORY
-        # -----------------------------
-
-        category = request.form.get("category", "").strip()
-
-        # -----------------------------
-        # PRODUCT SIZES
-        # -----------------------------
-
-        sizes = request.form.get("sizes", "").strip()
-
-        if not sizes:
-            sizes = default_sizes(category)
-
-        # -----------------------------
-        # SAVE PRODUCT TO DATABASE
-        # -----------------------------
+        sizes = (
+            request.form.get("sizes", "").strip()
+            or default_sizes(c)
+        )
 
         conn = db()
 
-        conn.execute(
-            """
+        conn.execute("""
             INSERT INTO products(
                 name,
                 category,
@@ -245,56 +217,39 @@ def admin():
                 featured,
                 sizes
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                request.form.get("name", "").strip(),
-                category,
-                request.form.get("price", 0),
-                request.form.get("old_price") or None,
-                request.form.get("description", "").strip(),
-                filename,
-                1 if request.form.get("featured") else 0,
-                sizes
-            )
-        )
+            VALUES(?,?,?,?,?,?,?,?)
+        """, (
+            request.form["name"],
+            c,
+            request.form["price"],
+            request.form.get("old_price") or None,
+            request.form.get("description", ""),
+            filename,
+            1 if request.form.get("featured") else 0,
+            sizes
+        ))
 
         conn.commit()
         conn.close()
 
-        flash("Product uploaded successfully.")
-
         return redirect(url_for("admin"))
-
-    # -----------------------------
-    # GET PRODUCTS
-    # -----------------------------
 
     conn = db()
 
     products = conn.execute(
-        """
-        SELECT *
-        FROM products
-        ORDER BY created_at DESC
-        """
+        "SELECT * FROM products "
+        "ORDER BY created_at DESC"
     ).fetchall()
 
-    # -----------------------------
-    # GET ORDERS
-    # -----------------------------
-
-    orders = conn.execute(
-        """
+    orders = conn.execute("""
         SELECT
             orders.*,
-            products.name AS product_name
+            products.name product_name
         FROM orders
         LEFT JOIN products
             ON orders.product_id = products.id
         ORDER BY orders.created_at DESC
-        """
-    ).fetchall()
+    """).fetchall()
 
     conn.close()
 
@@ -303,6 +258,7 @@ def admin():
         products=products,
         orders=orders
     )
+
 # =========================================================
 # INITIALISE DATABASE
 # =========================================================
