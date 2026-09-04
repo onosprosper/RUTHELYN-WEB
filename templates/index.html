@@ -16,13 +16,22 @@
     padding: 80px 6%;
     position: relative;
     overflow: hidden;
-    background:
-        linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.80) 48%, rgba(255,255,255,0.15) 100%),
-        url("{{ url_for('static', filename='logo.jpg') }}");
-    background-size: cover;
-    background-position: center;
-}
 
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,0.98) 0%,
+            rgba(255,255,255,0.90) 35%,
+            rgba(255,255,255,0.45) 65%,
+            rgba(255,255,255,0.18) 100%
+        ),
+        url("{{ url_for('static', filename='logo.jpg') }}");
+
+    background-repeat: no-repeat;
+    background-size: auto 90%;
+    background-position: 82% center;
+    background-color: #f7f4ee;
+}
 .hero-content {
     max-width: 650px;
     position: relative;
@@ -292,15 +301,20 @@
     .home-hero {
         min-height: 600px;
         padding: 60px 6%;
-        background:
+
+        background-image:
             linear-gradient(
                 90deg,
-                rgba(255,255,255,0.96),
-                rgba(255,255,255,0.55)
+                rgba(255,255,255,0.97) 0%,
+                rgba(255,255,255,0.88) 55%,
+                rgba(255,255,255,0.45) 100%
             ),
             url("{{ url_for('static', filename='logo.jpg') }}");
-        background-size: cover;
-        background-position: center;
+
+        background-repeat: no-repeat;
+        background-size: auto 70%;
+        background-position: 85% center;
+        background-color: #f7f4ee;
     }
 
     .category-grid-home {
@@ -315,7 +329,6 @@
         display: block;
     }
 }
-
 @media (max-width: 550px) {
 
     .home-hero {
