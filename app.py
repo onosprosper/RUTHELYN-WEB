@@ -1561,7 +1561,331 @@ def admin():
         orders=orders
 
     )
+# ============================================================
+# EDIT PRODUCT
+# ============================================================
 
+@app.route(
+    "/admin/product/<int:product_id>/edit",
+    methods=["GET", "POST"]
+)
+@admin_required
+def edit_product(product_id):
+
+    connection = db()
+
+    product_item = connection.execute("""
+        SELECT *
+        FROM products
+        WHERE id = ?
+    """, (product_id,)).fetchone()
+
+    # Product does not exist
+    if product_item is None:
+        connection.close()
+        flash("Product not found.")
+        return redirect(url_for("admin"))
+
+    # ========================================================
+    # SAVE EDITED PRODUCT
+    # ========================================================
+
+    if request.method == "POST":
+
+        name = request.form.get(
+            "name", ""
+        ).strip()
+
+        category = normalize_category(
+            request.form.get(
+                "category", ""
+            ).strip()
+        )
+
+        price_text = request.form.get(
+            "price", ""
+        ).strip()
+
+        old_price_text = request.form.get(
+            "old_price", ""
+        ).strip()
+
+        sizes = request.form.get(
+            "sizes", ""
+        ).strip()
+
+        description = request.form.get(
+            "description", ""
+        ).strip()
+
+        featured = (
+            1
+            if request.form.get("featured")
+            else 0
+        )
+
+        sold = (
+            1
+            if request.form.get("sold")
+            else 0
+        )
+
+        # ----------------------------------------
+        # PRODUCT NAME
+        # ----------------------------------------
+
+        if not name:
+            connection.close()
+
+            flash(
+                "Please enter a product name."
+            )
+
+            return redirect(
+                url_for(
+                    "edit_product",
+                    product_id=product_id
+                )
+            )
+
+        # ----------------------------------------
+        # CATEGORY
+        # ----------------------------------------
+
+        if not category:
+            connection.close()
+
+            flash(
+                "Please select a category."
+            )
+
+            return redirect(
+                url_for(
+                    "edit_product",
+                    product_id=product_id
+                )
+            )
+
+        # ----------------------------------------
+        # PRICE
+        # ----------------------------------------
+
+        try:
+            price = float(price_text)
+
+            if price < 0:
+                raise ValueError
+
+        except ValueError:
+
+            connection.close()
+
+            flash(
+                "Please enter a valid price."
+            )
+
+            return redirect(
+                url_for(
+                    "edit_product",
+                    product_id=product_id
+                )
+            )
+
+        # ----------------------------------------
+        # OLD PRICE
+        # ----------------------------------------
+
+        old_price = None
+
+        if old_price_text:
+
+            try:
+                old_price = float(
+                    old_price_text
+                )
+
+                if old_price < 0:
+                    old_price = None
+
+            except ValueError:
+                old_price = None
+
+        # ----------------------------------------
+        # SIZES
+        # ----------------------------------------
+
+        if not sizes:
+            sizes = default_sizes(
+                category
+            )
+
+        # ----------------------------------------
+        # CURRENT IMAGE
+        # ----------------------------------------
+
+        filename = product_item["image"]
+
+        # ----------------------------------------
+        # NEW IMAGE
+        # ----------------------------------------
+
+        image = request.files.get(
+            "image"
+        )
+
+        if image and image.filename:
+
+            if not allowed(image.filename):
+
+                connection.close()
+
+                flash(
+                    "Invalid image format. "
+                    "Use PNG, JPG, JPEG or WEBP."
+                )
+
+                return redirect(
+                    url_for(
+                        "edit_product",
+                        product_id=product_id
+                    )
+                )
+
+            original_filename = (
+                secure_filename(
+                    image.filename
+                )
+            )
+
+            if (
+                not original_filename
+                or "." not in original_filename
+            ):
+
+                connection.close()
+
+                flash(
+                    "Invalid image file."
+                )
+
+                return redirect(
+                    url_for(
+                        "edit_product",
+                        product_id=product_id
+                    )
+                )
+
+            extension = (
+                original_filename
+                .rsplit(".", 1)[1]
+                .lower()
+            )
+
+            new_filename = (
+                f"{uuid.uuid4().hex}."
+                f"{extension}"
+            )
+
+            new_image_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                new_filename
+            )
+
+            try:
+                image.save(
+                    new_image_path
+                )
+
+            except Exception:
+
+                connection.close()
+
+                flash(
+                    "There was a problem "
+                    "uploading the image."
+                )
+
+                return redirect(
+                    url_for(
+                        "edit_product",
+                        product_id=product_id
+                    )
+                )
+
+            # Delete old image
+            if filename:
+
+                old_image_path = os.path.join(
+                    app.config[
+                        "UPLOAD_FOLDER"
+                    ],
+                    filename
+                )
+
+                if os.path.exists(
+                    old_image_path
+                ):
+
+                    try:
+                        os.remove(
+                            old_image_path
+                        )
+                    except OSError:
+                        pass
+
+            filename = new_filename
+
+        # ----------------------------------------
+        # UPDATE DATABASE
+        # ----------------------------------------
+
+        connection.execute("""
+            UPDATE products
+            SET
+                name = ?,
+                category = ?,
+                price = ?,
+                old_price = ?,
+                description = ?,
+                image = ?,
+                featured = ?,
+                sizes = ?,
+                sold = ?
+            WHERE id = ?
+        """, (
+            name,
+            category,
+            price,
+            old_price,
+            description,
+            filename,
+            featured,
+            sizes,
+            sold,
+            product_id
+        ))
+
+        connection.commit()
+        connection.close()
+
+        flash(
+            "Product updated successfully."
+        )
+
+        return redirect(
+            url_for("admin")
+        )
+
+    # ========================================================
+    # SHOW EDIT PAGE
+    # ========================================================
+
+    connection.close()
+
+    return render_template(
+        "edit_product.html",
+        product=product_item
+    )
 
 # ============================================================
 # MARK PRODUCT SOLD / AVAILABLE
