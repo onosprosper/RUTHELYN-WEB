@@ -1,27 +1,332 @@
 {% extends "base.html" %}
-{% block title %}{{ product.name }} — RUTHELYN COLLECTIONS{% endblock %}
+
+{% block title %}
+{{ product.name }} — RUTHELYN COLLECTIONS
+{% endblock %}
+
 {% block content %}
+
+<style>
+
+  .product-gallery {
+    position: relative;
+  }
+
+  .product-gallery img {
+    width: 100%;
+    display: block;
+  }
+
+  .product-sold-badge {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    background: #111;
+    color: #fff;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    z-index: 5;
+  }
+
+  .sold-product-image {
+    opacity: 0.55;
+  }
+
+  .sold-message-box {
+    border: 1px solid #ddd;
+    padding: 24px;
+    margin-top: 20px;
+    text-align: center;
+    background: #fafafa;
+  }
+
+  .sold-message-box h3 {
+    margin-bottom: 10px;
+  }
+
+  .sold-message-box p {
+    margin-bottom: 18px;
+  }
+
+  .available-status {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #1a7f37;
+  }
+
+  .sold-status {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #b00020;
+  }
+
+</style>
+
+
 <section class="product-page">
+
   <div class="product-gallery">
-    {% if product.image %}<img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}">{% else %}<div class="image-placeholder large">RUTHELYN</div>{% endif %}
+
+    {% if product.image %}
+
+      <img
+        src="{{ url_for('static', filename='uploads/' + product.image) }}"
+        alt="{{ product.name }}"
+        class="{% if product.sold %}sold-product-image{% endif %}"
+      >
+
+    {% else %}
+
+      <div class="image-placeholder large">
+        RUTHELYN
+      </div>
+
+    {% endif %}
+
+
+    {% if product.sold %}
+
+      <span class="product-sold-badge">
+        SOLD OUT
+      </span>
+
+    {% endif %}
+
   </div>
+
+
   <div class="product-detail">
-    <span class="eyebrow">{{ product.category }}</span>
-    <h1>{{ product.name }}</h1>
-    <div class="product-price">₦{{ "{:,.0f}".format(product.price) }} {% if product.old_price %}<del>₦{{ "{:,.0f}".format(product.old_price) }}</del>{% endif %}</div>
-    <p class="product-description">{{ product.description or "A carefully selected Ruthelyn Collections piece designed to bring elegance and confidence to your wardrobe." }}</p>
+
+    <span class="eyebrow">
+      {{ product.category }}
+    </span>
+
+    <h1>
+      {{ product.name }}
+    </h1>
+
+
+    <div class="product-price">
+
+      ₦{{ "{:,.0f}".format(product.price) }}
+
+      {% if product.old_price %}
+
+        <del>
+          ₦{{ "{:,.0f}".format(product.old_price) }}
+        </del>
+
+      {% endif %}
+
+    </div>
+
+
+    {% if product.sold %}
+
+      <span class="sold-status">
+        SOLD OUT
+      </span>
+
+    {% else %}
+
+      <span class="available-status">
+        AVAILABLE
+      </span>
+
+    {% endif %}
+
+
+    <p class="product-description">
+
+      {{
+        product.description
+        or
+        "A carefully selected Ruthelyn Collections piece designed to bring elegance and confidence to your wardrobe."
+      }}
+
+    </p>
+
+
     <div class="detail-rule"></div>
-    <form method="post" action="{{ url_for('checkout', product_id=product.id) }}">
-      <label>Full Name</label><input name="customer_name" required>
-      <label>Phone Number</label><input name="phone" required>
-      <label>Delivery Address</label><textarea name="address" required></textarea>
-      {% if sizes %}<label>Size</label><select name="size" required><option value="">Choose size</option>{% for size in sizes %}<option value="{{ size }}">Size {{ size }}</option>{% endfor %}</select>{% endif %}
-      <label>Quantity</label><input type="number" name="quantity" value="1" min="1">
-      <label>Payment</label><select name="payment_method"><option>Pay on WhatsApp</option><option>Bank Transfer / Manual Confirmation</option></select>
-      <button class="btn btn-dark full" type="submit">ORDER THIS PIECE</button>
-    </form>
-    <div class="service-notes"><div><b>Secure ordering</b><span>Your details are used to process your order.</span></div><div><b>Need help?</b><span>Chat on WhatsApp: 08125506022</span></div></div>
+
+
+    {% if product.sold %}
+
+      <div class="sold-message-box">
+
+        <h3>
+          This piece is sold out.
+        </h3>
+
+        <p>
+          This product is currently unavailable.
+          Please explore our other available pieces.
+        </p>
+
+        <a
+          class="btn btn-dark"
+          href="{{ url_for('shop') }}"
+        >
+          SHOP AVAILABLE PRODUCTS
+        </a>
+
+      </div>
+
+
+    {% else %}
+
+      <form
+        method="post"
+        action="{{ url_for('checkout', product_id=product.id) }}"
+      >
+
+        <label>
+          Full Name
+        </label>
+
+        <input
+          name="customer_name"
+          required
+        >
+
+
+        <label>
+          Phone Number
+        </label>
+
+        <input
+          name="phone"
+          required
+        >
+
+
+        <label>
+          Delivery Address
+        </label>
+
+        <textarea
+          name="address"
+          required
+        ></textarea>
+
+
+        {% if sizes %}
+
+          <label>
+            Size
+          </label>
+
+          <select
+            name="size"
+            required
+          >
+
+            <option value="">
+              Choose size
+            </option>
+
+            {% for size in sizes %}
+
+              <option value="{{ size }}">
+                Size {{ size }}
+              </option>
+
+            {% endfor %}
+
+          </select>
+
+        {% endif %}
+
+
+        <label>
+          Quantity
+        </label>
+
+        <input
+          type="number"
+          name="quantity"
+          value="1"
+          min="1"
+        >
+
+
+        <label>
+          Payment
+        </label>
+
+        <select name="payment_method">
+
+          <option>
+            Pay on WhatsApp
+          </option>
+
+          <option>
+            Bank Transfer / Manual Confirmation
+          </option>
+
+        </select>
+
+
+        <button
+          class="btn btn-dark full"
+          type="submit"
+        >
+          ORDER THIS PIECE
+        </button>
+
+      </form>
+
+    {% endif %}
+
+
+    <div class="service-notes">
+
+      <div>
+        <b>Secure ordering</b>
+        <span>
+          Your details are used to process your order.
+        </span>
+      </div>
+
+      <div>
+        <b>Need help?</b>
+        <span>
+          Chat on WhatsApp: 08125506022
+        </span>
+      </div>
+
+    </div>
+
   </div>
+
 </section>
-<section class="section product-bottom"><span class="eyebrow">MORE TO LOVE</span><h2>Explore the collection.</h2><a class="btn btn-outline" href="{{ url_for('shop') }}">CONTINUE SHOPPING</a></section>
+
+
+<section class="section product-bottom">
+
+  <span class="eyebrow">
+    MORE TO LOVE
+  </span>
+
+  <h2>
+    Explore the collection.
+  </h2>
+
+  <a
+    class="btn btn-outline"
+    href="{{ url_for('shop') }}"
+  >
+    CONTINUE SHOPPING
+  </a>
+
+</section>
+
 {% endblock %}
