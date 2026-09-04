@@ -347,49 +347,7 @@
         padding: 65px 5%;
     }
 }
-</style>
 
-
-<!-- =================================
-     HERO
-================================= -->
-
-<section class="home-hero">
-
-    <div class="hero-content">
-
-        <span class="hero-eyebrow">
-            RUTHELYN COLLECTIONS
-        </span>
-
-        <h1 class="hero-title">
-            Elegance<br>
-            Made For You.
-        </h1>
-
-        <p class="hero-text">
-            Discover carefully selected fashion pieces, shoes, bags,
-            jewellery and accessories designed to help you look
-            confident, polished and unforgettable.
-        </p>
-
-        <div class="hero-buttons">
-
-            <a href="{{ url_for('shop') }}"
-               class="hero-button primary">
-                SHOP COLLECTION
-            </a>
-
-            <a href="{{ url_for('shop', category='Luxury Wears') }}"
-               class="hero-button secondary">
-                EXPLORE WEARS
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
 
 /* ================================
    SHOP VIDEO
@@ -458,6 +416,80 @@
     }
 
 }
+
+</style>
+
+
+<!-- =================================
+     HERO
+================================= -->
+
+<section class="home-hero">
+
+    <div class="hero-content">
+
+        <span class="hero-eyebrow">
+            RUTHELYN COLLECTIONS
+        </span>
+
+        <h1 class="hero-title">
+            Elegance<br>
+            Made For You.
+        </h1>
+
+        <p class="hero-text">
+            Discover carefully selected fashion pieces, shoes, bags,
+            jewellery and accessories designed to help you look
+            confident, polished and unforgettable.
+        </p>
+
+        <div class="hero-buttons">
+
+            <a href="{{ url_for('shop') }}"
+               class="hero-button primary">
+                SHOP COLLECTION
+            </a>
+
+            <a href="{{ url_for('shop', category='Luxury Wears') }}"
+               class="hero-button secondary">
+                EXPLORE WEARS
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =================================
+     SHOP VIDEO
+================================= -->
+
+<section class="shop-video-section">
+
+    <div class="shop-video-heading">
+        <span class="eyebrow">DISCOVER RUTHELYN</span>
+        <h2>Step Into Our World</h2>
+        <p>
+            Explore the latest styles, collections and fashion moments
+            from Ruthelyn Collections.
+        </p>
+    </div>
+
+    <div class="shop-video-container">
+        <video class="shop-video"
+               controls
+               muted
+               playsinline
+               preload="metadata"
+               poster="{{ url_for('static', filename='logo.jpg') }}">
+            <source src="{{ url_for('static', filename='shop-video.mp4') }}"
+                    type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+</section>
 
 <!-- =================================
      SHOP BY CATEGORY
