@@ -630,7 +630,6 @@ def shop():
 
     )
 
-
 # ============================================================
 # PRODUCT DETAILS
 # ============================================================
@@ -642,20 +641,19 @@ def product(product_id):
 
     connection = db()
 
-
     item = connection.execute("""
         SELECT *
-
         FROM products
-
         WHERE id = ?
     """, (
         product_id,
     )).fetchone()
 
-
     connection.close()
 
+    # --------------------------------------------------------
+    # PRODUCT NOT FOUND
+    # --------------------------------------------------------
 
     if item is None:
 
@@ -664,20 +662,32 @@ def product(product_id):
         )
 
         return redirect(
-            url_for(
-                "shop"
-            )
+            url_for("shop")
         )
 
+    # --------------------------------------------------------
+    # PRODUCT SIZES
+    # --------------------------------------------------------
+
+    sizes = []
+
+    if item["sizes"]:
+
+        sizes = [
+            size.strip()
+            for size in item["sizes"].split(",")
+            if size.strip()
+        ]
+
+    # --------------------------------------------------------
+    # DISPLAY PRODUCT
+    # --------------------------------------------------------
 
     return render_template(
-
         "product.html",
-
-        product=item
-
+        product=item,
+        sizes=sizes
     )
-
 
 # ============================================================
 # CHECKOUT
@@ -707,7 +717,6 @@ def checkout(product_id):
 
 
     connection.close()
-
 
     # --------------------------------------------------------
     # PRODUCT NOT FOUND
