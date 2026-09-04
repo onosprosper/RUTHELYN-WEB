@@ -5,7 +5,8 @@ from flask import (
     redirect,
     url_for,
     flash,
-    session
+    session,
+    Response
 )
 
 from functools import wraps
@@ -15,6 +16,8 @@ from werkzeug.utils import secure_filename
 import sqlite3
 import os
 import uuid
+import json
+from datetime import datetime, timezone
 
 
 # ============================================================
@@ -85,6 +88,32 @@ PHONE_NUMBER = os.environ.get(
     "PHONE_NUMBER",
     "08125506022"
 )
+
+
+# ============================================================
+# SITE / SEO INFORMATION
+# ============================================================
+
+SITE_URL = os.environ.get(
+    "SITE_URL",
+    "https://ruthelyncollect.onrender.com"
+).rstrip("/")
+
+DEFAULT_SEO_TITLE = (
+    "RUTHELYN COLLECTIONS | Women's Fashion in Nigeria"
+)
+
+DEFAULT_SEO_DESCRIPTION = (
+    "Shop elegant women's fashion, luxury wears, shoes, bags and "
+    "accessories from RUTHELYN COLLECTIONS. Delivery available in "
+    "Lagos, Abuja, Port Harcourt and across Nigeria."
+)
+
+TARGET_CITIES = [
+    "Lagos",
+    "Abuja",
+    "Port Harcourt"
+]
 
 
 # ============================================================
@@ -343,6 +372,83 @@ def whatsapp_url(message):
 
 
 # ============================================================
+# SEO HELPERS
+# ============================================================
+
+def absolute_url(path="/"):
+    if not path.startswith("/"):
+        path = "/" + path
+    return SITE_URL + path
+
+
+def product_image_url(item):
+    if item and item["image"]:
+        return absolute_url(
+            url_for(
+                "static",
+                filename="uploads/" + item["image"]
+            )
+        )
+    return absolute_url(
+        url_for("static", filename="logo.jpg")
+    )
+
+
+def build_product_schema(item):
+    availability = (
+        "https://schema.org/OutOfStock"
+        if item["sold"]
+        else "https://schema.org/InStock"
+    )
+
+    description = (
+        item["description"].strip()
+        if item["description"]
+        else f"Shop {item['name']} from {BUSINESS_NAME} in Nigeria."
+    )
+
+    return {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": item["name"],
+        "description": description,
+        "image": [product_image_url(item)],
+        "sku": f"RUT-{item['id']}",
+        "brand": {
+            "@type": "Brand",
+            "name": BUSINESS_NAME
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": absolute_url(
+                url_for("product", product_id=item["id"])
+            ),
+            "priceCurrency": "NGN",
+            "price": f"{float(item['price']):.2f}",
+            "availability": availability,
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+                "@type": "Organization",
+                "name": BUSINESS_NAME
+            }
+        }
+    }
+
+
+@app.context_processor
+def inject_store_context():
+    return {
+        "business_name": BUSINESS_NAME,
+        "site_url": SITE_URL,
+        "whatsapp_number": WHATSAPP_NUMBER,
+        "phone_number": PHONE_NUMBER,
+        "default_seo_title": DEFAULT_SEO_TITLE,
+        "default_seo_description": DEFAULT_SEO_DESCRIPTION,
+        "target_cities": TARGET_CITIES
+    }
+
+
+# ============================================================
 # ADMIN AUTHENTICATION DECORATOR
 # ============================================================
 
@@ -467,7 +573,13 @@ def home():
 
         products=products,
 
-        category_products=category_products
+        category_products=category_products,
+
+        seo_title=DEFAULT_SEO_TITLE,
+
+        seo_description=DEFAULT_SEO_DESCRIPTION,
+
+        canonical_url=absolute_url("/")
 
     )
 
@@ -626,7 +738,26 @@ def shop():
 
         selected_category=category,
 
-        search=search
+        search=search,
+
+        seo_title=(
+            f"{category} in Nigeria | {BUSINESS_NAME}"
+            if category
+            else f"Shop Women's Fashion in Nigeria | {BUSINESS_NAME}"
+        ),
+
+        seo_description=(
+            f"Shop {category.lower()} from {BUSINESS_NAME}. Delivery in Lagos, "
+            "Abuja, Port Harcourt and nationwide across Nigeria."
+            if category
+            else DEFAULT_SEO_DESCRIPTION
+        ),
+
+        canonical_url=absolute_url(
+            url_for("shop", category=category)
+            if category
+            else url_for("shop")
+        )
 
     )
 
@@ -686,7 +817,20 @@ def product(product_id):
     return render_template(
         "product.html",
         product=item,
-        sizes=sizes
+        sizes=sizes,
+        seo_title=f"{item['name']} | Buy Online in Nigeria | {BUSINESS_NAME}",
+        seo_description=(
+            (item["description"] or "").strip()
+            or f"Buy {item['name']} from {BUSINESS_NAME}. Delivery available in Lagos, Abuja, Port Harcourt and across Nigeria."
+        ),
+        canonical_url=absolute_url(
+            url_for("product", product_id=item["id"])
+        ),
+        product_image_url=product_image_url(item),
+        product_schema=json.dumps(
+            build_product_schema(item),
+            ensure_ascii=False
+        )
     )
 
 # ============================================================
@@ -2165,6 +2309,127 @@ def update_order_status(order_id):
 
 
 # ============================================================
+# SEO: SITEMAP.XML
+# ============================================================
+
+@app.route("/sitemap.xml")
+def sitemap():
+    connection = db()
+    products = connection.execute("""
+        SELECT id, created_at
+        FROM products
+        ORDER BY id DESC
+    """).fetchall()
+    connection.close()
+
+    urls = [
+        (absolute_url("/"), None, "1.0", "daily"),
+        (absolute_url("/shop"), None, "0.9", "daily"),
+    ]
+
+    for category in [
+        "Luxury Wears",
+        "Shoes",
+        "Bags",
+        "Jewellery & Accessories"
+    ]:
+        urls.append((
+            absolute_url(url_for("shop", category=category)),
+            None,
+            "0.8",
+            "daily"
+        ))
+
+    for item in products:
+        lastmod = None
+        if item["created_at"]:
+            try:
+                lastmod = str(item["created_at"]).split(" ")[0]
+            except Exception:
+                lastmod = None
+
+        urls.append((
+            absolute_url(
+                url_for("product", product_id=item["id"])
+            ),
+            lastmod,
+            "0.8",
+            "weekly"
+        ))
+
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+
+    for loc, lastmod, priority, changefreq in urls:
+        parts.append("<url>")
+        parts.append(f"<loc>{loc}</loc>")
+        if lastmod:
+            parts.append(f"<lastmod>{lastmod}</lastmod>")
+        parts.append(f"<changefreq>{changefreq}</changefreq>")
+        parts.append(f"<priority>{priority}</priority>")
+        parts.append("</url>")
+
+    parts.append("</urlset>")
+
+    return Response(
+        "\n".join(parts),
+        mimetype="application/xml"
+    )
+
+
+# ============================================================
+# SEO: ROBOTS.TXT
+# ============================================================
+
+@app.route("/robots.txt")
+def robots():
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /checkout/\n"
+        f"Sitemap: {absolute_url('/sitemap.xml')}\n"
+    )
+
+    return Response(
+        content,
+        mimetype="text/plain"
+    )
+
+
+# ============================================================
+# PRODUCT-SPECIFIC WHATSAPP ORDER LINK
+# ============================================================
+
+@app.route("/whatsapp/product/<int:product_id>")
+def whatsapp_product(product_id):
+    connection = db()
+    item = connection.execute("""
+        SELECT *
+        FROM products
+        WHERE id = ?
+    """, (product_id,)).fetchone()
+    connection.close()
+
+    if item is None:
+        flash("Product not found.")
+        return redirect(url_for("shop"))
+
+    message = (
+        f"Hello {BUSINESS_NAME},\n\n"
+        f"I am interested in this product:\n"
+        f"Product: {item['name']}\n"
+        f"Price: ₦{float(item['price']):,.0f}\n"
+        f"Product link: {absolute_url(url_for('product', product_id=item['id']))}\n\n"
+        "Please confirm availability, size and delivery cost to my location."
+    )
+
+    return redirect(whatsapp_url(message))
+
+
+# ============================================================
 # CUSTOMER SERVICE - WEBSITE CHAT API
 # ============================================================
 
@@ -2522,6 +2787,28 @@ def whatsapp():
             message
         )
     )
+
+
+# ============================================================
+# BASIC SECURITY / CRAWLING HEADERS
+# ============================================================
+
+@app.after_request
+def add_response_headers(response):
+    response.headers.setdefault(
+        "X-Content-Type-Options",
+        "nosniff"
+    )
+    response.headers.setdefault(
+        "Referrer-Policy",
+        "strict-origin-when-cross-origin"
+    )
+
+    # Keep private/admin and checkout pages out of search engines.
+    if request.path.startswith("/admin") or request.path.startswith("/checkout"):
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+
+    return response
 
 
 # ============================================================
