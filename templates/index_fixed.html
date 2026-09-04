@@ -1,0 +1,821 @@
+{% extends "base.html" %}
+
+{% block title %}RUTHELYN COLLECTIONS — Luxury Fashion{% endblock %}
+
+{% block content %}
+
+<style>
+/* ================================
+   RUTHELYN HOMEPAGE
+================================ */
+
+.home-hero {
+    min-height: 72vh;
+    display: flex;
+    align-items: center;
+    padding: 80px 6%;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.80) 48%, rgba(255,255,255,0.15) 100%),
+        url("{{ url_for('static', filename='logo.jpg') }}");
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-content {
+    max-width: 650px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-eyebrow {
+    font-size: 12px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    display: block;
+}
+
+.hero-title {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(42px, 6vw, 82px);
+    line-height: 0.98;
+    margin: 0 0 25px;
+    letter-spacing: -2px;
+}
+
+.hero-text {
+    max-width: 520px;
+    font-size: 17px;
+    line-height: 1.8;
+    margin-bottom: 30px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.hero-button {
+    display: inline-block;
+    padding: 15px 28px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid #111;
+    transition: 0.25s ease;
+}
+
+.hero-button.primary {
+    background: #111;
+    color: #fff;
+}
+
+.hero-button.primary:hover {
+    background: #333;
+}
+
+.hero-button.secondary {
+    background: transparent;
+    color: #111;
+}
+
+.hero-button.secondary:hover {
+    background: #111;
+    color: #fff;
+}
+
+
+/* ================================
+   CATEGORY SECTION
+================================ */
+
+.home-section {
+    padding: 90px 6%;
+}
+
+.home-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.home-heading .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+}
+
+.home-heading h2 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(34px, 4vw, 52px);
+    margin: 8px 0 0;
+}
+
+.home-heading p {
+    max-width: 450px;
+    line-height: 1.7;
+}
+
+
+/* ================================
+   FOUR CATEGORY BOXES
+================================ */
+
+.category-grid-home {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.category-box-home {
+    position: relative;
+    min-height: 430px;
+    overflow: hidden;
+    background: #f3f1ee;
+    text-decoration: none;
+    color: #111;
+    display: flex;
+    align-items: flex-end;
+}
+
+.category-image-home {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.category-box-home:hover .category-image-home {
+    transform: scale(1.05);
+}
+
+.category-placeholder-home {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Playfair Display", serif;
+    font-size: 26px;
+    color: #888;
+}
+
+.category-overlay-home {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.72),
+        rgba(0,0,0,0.05) 70%
+    );
+}
+
+.category-content-home {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 30px;
+    color: #fff;
+}
+
+.category-number-home {
+    font-size: 12px;
+    letter-spacing: 2px;
+    opacity: 0.85;
+}
+
+.category-content-home h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 32px;
+    margin: 8px 0 12px;
+}
+
+.category-shop-home {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+}
+
+
+/* ================================
+   FEATURED PRODUCTS
+================================ */
+
+.featured-grid-home {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+}
+
+.featured-card-home {
+    text-decoration: none;
+    color: #111;
+    display: block;
+}
+
+.featured-image-home {
+    width: 100%;
+    aspect-ratio: 0.82;
+    object-fit: cover;
+    display: block;
+    background: #f2f2f2;
+}
+
+.featured-info-home {
+    padding: 15px 2px;
+}
+
+.featured-info-home h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 18px;
+    margin: 0 0 7px;
+}
+
+.featured-category-home {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 8px;
+}
+
+.featured-price-home {
+    font-weight: 700;
+}
+
+
+/* ================================
+   BRAND STATEMENT
+================================ */
+
+.brand-statement-home {
+    padding: 100px 6%;
+    text-align: center;
+    background: #f5f2ed;
+}
+
+.brand-statement-home .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+}
+
+.brand-statement-home h2 {
+    max-width: 850px;
+    margin: 18px auto;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(34px, 5vw, 62px);
+    line-height: 1.1;
+}
+
+.brand-statement-home p {
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 900px) {
+
+    .home-hero {
+        min-height: 600px;
+        padding: 60px 6%;
+        background:
+            linear-gradient(
+                90deg,
+                rgba(255,255,255,0.96),
+                rgba(255,255,255,0.55)
+            ),
+            url("{{ url_for('static', filename='logo.jpg') }}");
+        background-size: cover;
+        background-position: center;
+    }
+
+    .category-grid-home {
+        grid-template-columns: 1fr;
+    }
+
+    .featured-grid-home {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .home-heading {
+        display: block;
+    }
+}
+
+@media (max-width: 550px) {
+
+    .home-hero {
+        min-height: 560px;
+    }
+
+    .hero-title {
+        font-size: 46px;
+    }
+
+    .hero-text {
+        font-size: 15px;
+    }
+
+    .category-box-home {
+        min-height: 360px;
+    }
+
+    .category-content-home h3 {
+        font-size: 27px;
+    }
+
+    .featured-grid-home {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .home-section {
+        padding: 65px 5%;
+    }
+}
+
+
+/* ================================
+   SHOP VIDEO
+================================ */
+
+.shop-video-section {
+    padding: 90px 6%;
+    background: #f8f6f2;
+}
+
+.shop-video-heading {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 40px;
+}
+
+.shop-video-heading .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 700;
+}
+
+.shop-video-heading h2 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(36px, 5vw, 58px);
+    line-height: 1.1;
+    margin: 12px 0 15px;
+}
+
+.shop-video-heading p {
+    line-height: 1.8;
+    margin: 0 auto;
+}
+
+.shop-video-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    background: #111;
+}
+
+.shop-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 680px;
+    object-fit: cover;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+
+    .shop-video-section {
+        padding: 65px 5%;
+    }
+
+    .shop-video-container {
+        width: 100%;
+    }
+
+    .shop-video {
+        min-height: 400px;
+        object-fit: cover;
+    }
+
+}
+
+</style>
+
+
+<!-- =================================
+     HERO
+================================= -->
+
+<section class="home-hero">
+
+    <div class="hero-content">
+
+        <span class="hero-eyebrow">
+            RUTHELYN COLLECTIONS
+        </span>
+
+        <h1 class="hero-title">
+            Elegance<br>
+            Made For You.
+        </h1>
+
+        <p class="hero-text">
+            Discover carefully selected fashion pieces, shoes, bags,
+            jewellery and accessories designed to help you look
+            confident, polished and unforgettable.
+        </p>
+
+        <div class="hero-buttons">
+
+            <a href="{{ url_for('shop') }}"
+               class="hero-button primary">
+                SHOP COLLECTION
+            </a>
+
+            <a href="{{ url_for('shop', category='Luxury Wears') }}"
+               class="hero-button secondary">
+                EXPLORE WEARS
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =================================
+     SHOP VIDEO
+================================= -->
+
+<section class="shop-video-section">
+
+    <div class="shop-video-heading">
+        <span class="eyebrow">DISCOVER RUTHELYN</span>
+        <h2>Step Into Our World</h2>
+        <p>
+            Explore the latest styles, collections and fashion moments
+            from Ruthelyn Collections.
+        </p>
+    </div>
+
+    <div class="shop-video-container">
+        <video class="shop-video"
+               controls
+               muted
+               playsinline
+               preload="metadata"
+               poster="{{ url_for('static', filename='logo.jpg') }}">
+            <source src="{{ url_for('static', filename='shop-video.mp4') }}"
+                    type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+</section>
+
+<!-- =================================
+     SHOP BY CATEGORY
+================================= -->
+
+<section class="home-section">
+
+    <div class="home-heading">
+
+        <div>
+            <span class="eyebrow">
+                SHOP BY CATEGORY
+            </span>
+
+            <h2>
+                Find Your Style
+            </h2>
+        </div>
+
+        <p>
+            Explore our carefully selected collections and discover
+            pieces that fit your personal style.
+        </p>
+
+    </div>
+
+
+    <div class="category-grid-home">
+
+
+        <!-- 01 LUXURY WEARS -->
+
+        {% set wears = category_products.get("Luxury Wears") %}
+
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Luxury Wears') }}">
+
+            {% if wears and wears.image %}
+
+                <img
+                    class="category-image-home"
+                    src="{{ url_for('static', filename='uploads/' + wears.image) }}"
+                    alt="{{ wears.name }}"
+                >
+
+            {% else %}
+
+                <div class="category-placeholder-home">
+                    Luxury Wears
+                </div>
+
+            {% endif %}
+
+            <div class="category-overlay-home"></div>
+
+            <div class="category-content-home">
+
+                <div class="category-number-home">
+                    01
+                </div>
+
+                <h3>
+                    Luxury Wears
+                </h3>
+
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <!-- 02 SHOES -->
+
+        {% set shoes = category_products.get("Shoes") %}
+
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Shoes') }}">
+
+            {% if shoes and shoes.image %}
+
+                <img
+                    class="category-image-home"
+                    src="{{ url_for('static', filename='uploads/' + shoes.image) }}"
+                    alt="{{ shoes.name }}"
+                >
+
+            {% else %}
+
+                <div class="category-placeholder-home">
+                    Shoes
+                </div>
+
+            {% endif %}
+
+            <div class="category-overlay-home"></div>
+
+            <div class="category-content-home">
+
+                <div class="category-number-home">
+                    02
+                </div>
+
+                <h3>
+                    Shoes
+                </h3>
+
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <!-- 03 BAGS -->
+
+        {% set bags = category_products.get("Bags") %}
+
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Bags') }}">
+
+            {% if bags and bags.image %}
+
+                <img
+                    class="category-image-home"
+                    src="{{ url_for('static', filename='uploads/' + bags.image) }}"
+                    alt="{{ bags.name }}"
+                >
+
+            {% else %}
+
+                <div class="category-placeholder-home">
+                    Bags
+                </div>
+
+            {% endif %}
+
+            <div class="category-overlay-home"></div>
+
+            <div class="category-content-home">
+
+                <div class="category-number-home">
+                    03
+                </div>
+
+                <h3>
+                    Bags
+                </h3>
+
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <!-- 04 JEWELLERY & ACCESSORIES -->
+
+        {% set accessories = category_products.get("Jewellery & Accessories") %}
+
+        <a class="category-box-home"
+           href="{{ url_for('shop', category='Jewellery & Accessories') }}">
+
+            {% if accessories and accessories.image %}
+
+                <img
+                    class="category-image-home"
+                    src="{{ url_for('static', filename='uploads/' + accessories.image) }}"
+                    alt="{{ accessories.name }}"
+                >
+
+            {% else %}
+
+                <div class="category-placeholder-home">
+                    Jewellery & Accessories
+                </div>
+
+            {% endif %}
+
+            <div class="category-overlay-home"></div>
+
+            <div class="category-content-home">
+
+                <div class="category-number-home">
+                    04
+                </div>
+
+                <h3>
+                    Jewellery & Accessories
+                </h3>
+
+                <div class="category-shop-home">
+                    SHOP NOW →
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =================================
+     FEATURED PRODUCTS
+================================= -->
+
+{% if products %}
+
+<section class="home-section">
+
+    <div class="home-heading">
+
+        <div>
+
+            <span class="eyebrow">
+                LATEST ARRIVALS
+            </span>
+
+            <h2>
+                New In
+            </h2>
+
+        </div>
+
+        <p>
+            Discover the latest pieces added to
+            Ruthelyn Collections.
+        </p>
+
+    </div>
+
+
+    <div class="featured-grid-home">
+
+        {% for p in products %}
+
+        <a
+            class="featured-card-home"
+            href="{{ url_for('product', product_id=p.id) }}"
+        >
+
+            {% if p.image %}
+
+            <img
+                class="featured-image-home"
+                src="{{ url_for('static', filename='uploads/' + p.image) }}"
+                alt="{{ p.name }}"
+            >
+
+            {% else %}
+
+            <div class="featured-image-home"></div>
+
+            {% endif %}
+
+
+            <div class="featured-info-home">
+
+                <div class="featured-category-home">
+                    {{ p.category }}
+                </div>
+
+                <h3>
+                    {{ p.name }}
+                </h3>
+
+                <div class="featured-price-home">
+                    ₦{{ "{:,.0f}".format(p.price|float) }}
+                </div>
+
+            </div>
+
+        </a>
+
+        {% endfor %}
+
+    </div>
+
+
+    <div style="text-align:center; margin-top:45px;">
+
+        <a
+            href="{{ url_for('shop') }}"
+            class="hero-button primary"
+        >
+            VIEW ALL PRODUCTS
+        </a>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<!-- =================================
+     BRAND STATEMENT
+================================= -->
+
+<section class="brand-statement-home">
+
+    <span class="eyebrow">
+        RUTHELYN COLLECTIONS
+    </span>
+
+    <h2>
+        Fashion that makes you feel
+        confident, beautiful and unforgettable.
+    </h2>
+
+    <p>
+        From elegant wears to statement shoes, beautiful bags
+        and carefully selected accessories, Ruthelyn Collections
+        brings together fashion pieces for women who appreciate
+        quality, confidence and timeless style.
+    </p>
+
+</section>
+
+
+{% endblock %}
