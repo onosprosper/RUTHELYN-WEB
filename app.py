@@ -7,8 +7,8 @@ from flask import (
     flash,
     session
 )
+
 from functools import wraps
-from datetime import datetime
 from urllib.parse import quote
 from werkzeug.utils import secure_filename
 
@@ -23,49 +23,74 @@ import uuid
 
 app = Flask(__name__)
 
-# ------------------------------------------------------------
+
+# ============================================================
 # SECRET KEY
-# ------------------------------------------------------------
+# ============================================================
+
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY",
     "ruthelyn-development-secret-key-change-in-render"
 )
 
-# ------------------------------------------------------------
-# DATABASE
-# ------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, "ruthelyn.db")
 
-# ------------------------------------------------------------
+# ============================================================
+# DATABASE
+# ============================================================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATABASE = os.path.join(
+    BASE_DIR,
+    "ruthelyn.db"
+)
+
+
+# ============================================================
 # UPLOADS
-# ------------------------------------------------------------
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
+# ============================================================
+
+UPLOAD_FOLDER = os.path.join(
+    BASE_DIR,
+    "static",
+    "uploads"
+)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["MAX_CONTENT_LENGTH"] = (
+    10 * 1024 * 1024
+)
 
-# ------------------------------------------------------------
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
+
+
+# ============================================================
 # STORE INFORMATION
-# ------------------------------------------------------------
+# ============================================================
+
 BUSINESS_NAME = "RUTHELYN COLLECTIONS"
+
 
 WHATSAPP_NUMBER = os.environ.get(
     "WHATSAPP_NUMBER",
     "2348125506022"
 )
 
+
 PHONE_NUMBER = os.environ.get(
     "PHONE_NUMBER",
     "08125506022"
-    "08153984064"
 )
 
-# ------------------------------------------------------------
+
+# ============================================================
 # ALLOWED IMAGE TYPES
-# ------------------------------------------------------------
+# ============================================================
+
 ALLOWED_EXTENSIONS = {
     "png",
     "jpg",
@@ -75,62 +100,121 @@ ALLOWED_EXTENSIONS = {
 
 
 # ============================================================
-# DATABASE FUNCTIONS
+# DATABASE CONNECTION
 # ============================================================
 
 def db():
-    """
-    Open SQLite database connection.
-    """
-    connection = sqlite3.connect(DATABASE)
+
+    connection = sqlite3.connect(
+        DATABASE
+    )
+
     connection.row_factory = sqlite3.Row
+
     return connection
 
 
+# ============================================================
+# DATABASE INITIALIZATION
+# ============================================================
+
 def init_db():
-    """
-    Create database tables if they do not exist.
-    """
 
     connection = db()
 
+
+    # --------------------------------------------------------
+    # PRODUCTS TABLE
+    # --------------------------------------------------------
+
     connection.execute("""
         CREATE TABLE IF NOT EXISTS products (
+
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+
             name TEXT NOT NULL,
+
             category TEXT NOT NULL,
+
             price REAL NOT NULL,
+
             old_price REAL,
+
             description TEXT,
+
             image TEXT,
+
             featured INTEGER DEFAULT 0,
+
             sizes TEXT,
+
+            sold INTEGER DEFAULT 0,
+
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
         )
     """)
+
+
+    # --------------------------------------------------------
+    # ADD SOLD COLUMN TO OLD DATABASE IF NEEDED
+    # --------------------------------------------------------
+
+    product_columns = connection.execute(
+        "PRAGMA table_info(products)"
+    ).fetchall()
+
+    product_column_names = [
+        row["name"]
+        for row in product_columns
+    ]
+
+
+    if "sold" not in product_column_names:
+
+        connection.execute("""
+            ALTER TABLE products
+            ADD COLUMN sold INTEGER DEFAULT 0
+        """)
+
+
+    # --------------------------------------------------------
+    # ORDERS TABLE
+    # --------------------------------------------------------
 
     connection.execute("""
         CREATE TABLE IF NOT EXISTS orders (
+
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+
             product_id INTEGER,
+
             customer_name TEXT,
+
             phone TEXT,
+
             address TEXT,
+
             size TEXT,
+
             quantity INTEGER DEFAULT 1,
+
             payment_method TEXT,
+
             status TEXT DEFAULT 'Pending',
+
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(product_id) REFERENCES products(id)
+
+            FOREIGN KEY(product_id)
+            REFERENCES products(id)
+
         )
     """)
 
+
     connection.commit()
+
     connection.close()
-
-
-# Initialize database when Flask/Gunicorn imports the app.
-init_db()
 
 
 # ============================================================
@@ -138,9 +222,6 @@ init_db()
 # ============================================================
 
 def allowed(filename):
-    """
-    Check whether an uploaded file has an allowed extension.
-    """
 
     if not filename:
         return False
@@ -148,62 +229,112 @@ def allowed(filename):
     if "." not in filename:
         return False
 
-    extension = filename.rsplit(".", 1)[1].lower()
+    extension = (
+        filename
+        .rsplit(".", 1)[1]
+        .lower()
+    )
 
     return extension in ALLOWED_EXTENSIONS
 
 
-def default_sizes(category):
-    """
-    Automatically provide sizes according to product category.
-    """
+# ============================================================
+# DEFAULT PRODUCT SIZES
+# ============================================================
 
-    category_lower = category.lower()
+def default_sizes(category):
+
+    if not category:
+        return "One Size"
+
+    category_lower = (
+        category
+        .strip()
+        .lower()
+    )
+
 
     if category_lower == "luxury wears":
+
         return "8,10,12,14"
 
+
     if category_lower == "shoes":
+
         return "38,39,40,41,42,43,44,45,46"
 
+
     if category_lower == "bags":
+
         return "One Size"
 
-    if (
-        category_lower == "jewellery & accessories"
-        or category_lower == "jewellry & accessories"
-    ):
+
+    if category_lower in {
+
+        "jewellery & accessories",
+
+        "jewelry & accessories",
+
+        "jewellry & accessories"
+
+    }:
+
         return "One Size"
+
 
     return "One Size"
 
 
+# ============================================================
+# CATEGORY NORMALIZATION
+# ============================================================
+
 def normalize_category(category):
-    """
-    Keep the website category spelling consistent.
-    """
 
     if not category:
         return category
 
+
     category = category.strip()
 
+
     mapping = {
-        "Jewellry & Accessories": "Jewellery & Accessories",
-        "Jewellery & Accessories": "Jewellery & Accessories",
-        "Luxury Wear": "Luxury Wears",
-        "Luxury Wears": "Luxury Wears",
-        "Shoes": "Shoes",
-        "Bags": "Bags"
+
+        "Jewellry & Accessories":
+            "Jewellery & Accessories",
+
+        "Jewelry & Accessories":
+            "Jewellery & Accessories",
+
+        "Jewellery & Accessories":
+            "Jewellery & Accessories",
+
+        "Luxury Wear":
+            "Luxury Wears",
+
+        "Luxury Wears":
+            "Luxury Wears",
+
+        "Shoes":
+            "Shoes",
+
+        "Bags":
+            "Bags"
+
     }
 
-    return mapping.get(category, category)
 
+    return mapping.get(
+        category,
+        category
+    )
+
+
+# ============================================================
+# WHATSAPP URL
+# ============================================================
 
 def whatsapp_url(message):
-    """
-    Create WhatsApp URL.
-    """
 
     return (
         f"https://wa.me/{WHATSAPP_NUMBER}"
@@ -212,20 +343,44 @@ def whatsapp_url(message):
 
 
 # ============================================================
-# ADMIN AUTHENTICATION
+# ADMIN AUTHENTICATION DECORATOR
 # ============================================================
 
 def admin_required(view_function):
 
     @wraps(view_function)
-    def wrapped_view(*args, **kwargs):
+    def wrapped_view(
+        *args,
+        **kwargs
+    ):
 
-        if not session.get("admin_logged_in"):
-            return redirect(url_for("admin_login"))
+        if not session.get(
+            "admin_logged_in"
+        ):
 
-        return view_function(*args, **kwargs)
+            return redirect(
+                url_for(
+                    "admin_login"
+                )
+            )
+
+
+        return view_function(
+            *args,
+            **kwargs
+        )
+
 
     return wrapped_view
+
+
+# ============================================================
+# INITIALIZE DATABASE
+# ============================================================
+
+# This runs when Gunicorn imports app.py on Render.
+
+init_db()
 
 
 # ============================================================
@@ -237,49 +392,83 @@ def home():
 
     connection = db()
 
+
     # --------------------------------------------------------
-    # Featured products
+    # LATEST / FEATURED PRODUCTS
     # --------------------------------------------------------
+
     products = connection.execute("""
         SELECT *
         FROM products
-        ORDER BY featured DESC, created_at DESC, id DESC
+
+        ORDER BY
+            featured DESC,
+            created_at DESC,
+            id DESC
+
         LIMIT 8
     """).fetchall()
 
+
     # --------------------------------------------------------
-    # Latest product with image for each homepage category
+    # HOMEPAGE CATEGORY PRODUCTS
     # --------------------------------------------------------
 
     category_names = [
+
         "Luxury Wears",
+
         "Shoes",
+
         "Bags",
+
         "Jewellery & Accessories"
+
     ]
+
 
     category_products = {}
 
+
     for category in category_names:
 
-        product = connection.execute("""
+        product_item = connection.execute("""
             SELECT *
-            FROM products
-            WHERE category = ?
-            AND image IS NOT NULL
-            AND image != ''
-            ORDER BY created_at DESC, id DESC
-            LIMIT 1
-        """, (category,)).fetchone()
 
-        category_products[category] = product
+            FROM products
+
+            WHERE category = ?
+
+            AND image IS NOT NULL
+
+            AND image != ''
+
+            ORDER BY
+                created_at DESC,
+                id DESC
+
+            LIMIT 1
+        """, (
+            category,
+        )).fetchone()
+
+
+        category_products[
+            category
+        ] = product_item
+
 
     connection.close()
 
+
     return render_template(
+
         "index.html",
+
         products=products,
+
         category_products=category_products
+
     )
 
 
@@ -290,78 +479,155 @@ def home():
 @app.route("/shop")
 def shop():
 
-    search = request.args.get("q", "").strip()
+    search = request.args.get(
+        "q",
+        ""
+    ).strip()
 
-    category = request.args.get("category", "").strip()
 
-    category = normalize_category(category)
+    category = request.args.get(
+        "category",
+        ""
+    ).strip()
+
+
+    category = normalize_category(
+        category
+    )
+
 
     connection = db()
+
+
+    # --------------------------------------------------------
+    # SEARCH + CATEGORY
+    # --------------------------------------------------------
 
     if search and category:
 
         products = connection.execute("""
             SELECT *
+
             FROM products
+
             WHERE
                 (
                     name LIKE ?
                     OR description LIKE ?
                 )
+
                 AND category = ?
-            ORDER BY created_at DESC, id DESC
+
+            ORDER BY
+                created_at DESC,
+                id DESC
+
         """, (
+
             f"%{search}%",
+
             f"%{search}%",
+
             category
+
         )).fetchall()
+
+
+    # --------------------------------------------------------
+    # SEARCH ONLY
+    # --------------------------------------------------------
 
     elif search:
 
         products = connection.execute("""
             SELECT *
+
             FROM products
+
             WHERE
                 name LIKE ?
                 OR description LIKE ?
-            ORDER BY created_at DESC, id DESC
+
+            ORDER BY
+                created_at DESC,
+                id DESC
+
         """, (
+
             f"%{search}%",
+
             f"%{search}%"
+
         )).fetchall()
+
+
+    # --------------------------------------------------------
+    # CATEGORY ONLY
+    # --------------------------------------------------------
 
     elif category:
 
         products = connection.execute("""
             SELECT *
+
             FROM products
+
             WHERE category = ?
-            ORDER BY created_at DESC, id DESC
-        """, (category,)).fetchall()
+
+            ORDER BY
+                created_at DESC,
+                id DESC
+
+        """, (
+            category,
+        )).fetchall()
+
+
+    # --------------------------------------------------------
+    # ALL PRODUCTS
+    # --------------------------------------------------------
 
     else:
 
         products = connection.execute("""
             SELECT *
+
             FROM products
-            ORDER BY created_at DESC, id DESC
+
+            ORDER BY
+                created_at DESC,
+                id DESC
         """).fetchall()
+
 
     connection.close()
 
+
     categories = [
+
         "Luxury Wears",
+
         "Shoes",
+
         "Bags",
+
         "Jewellery & Accessories"
+
     ]
 
+
     return render_template(
+
         "shop.html",
+
         products=products,
+
         categories=categories,
+
         selected_category=category,
+
         search=search
+
     )
 
 
@@ -369,26 +635,47 @@ def shop():
 # PRODUCT DETAILS
 # ============================================================
 
-@app.route("/product/<int:product_id>")
+@app.route(
+    "/product/<int:product_id>"
+)
 def product(product_id):
 
     connection = db()
 
+
     item = connection.execute("""
         SELECT *
+
         FROM products
+
         WHERE id = ?
-    """, (product_id,)).fetchone()
+    """, (
+        product_id,
+    )).fetchone()
+
 
     connection.close()
 
+
     if item is None:
-        flash("Product not found.")
-        return redirect(url_for("shop"))
+
+        flash(
+            "Product not found."
+        )
+
+        return redirect(
+            url_for(
+                "shop"
+            )
+        )
+
 
     return render_template(
+
         "product.html",
+
         product=item
+
     )
 
 
@@ -396,32 +683,97 @@ def product(product_id):
 # CHECKOUT
 # ============================================================
 
-@app.route("/checkout/<int:product_id>", methods=["GET", "POST"])
+@app.route(
+    "/checkout/<int:product_id>",
+    methods=[
+        "GET",
+        "POST"
+    ]
+)
 def checkout(product_id):
 
     connection = db()
 
+
     item = connection.execute("""
         SELECT *
+
         FROM products
+
         WHERE id = ?
-    """, (product_id,)).fetchone()
+    """, (
+        product_id,
+    )).fetchone()
+
 
     connection.close()
 
+
+    # --------------------------------------------------------
+    # PRODUCT NOT FOUND
+    # --------------------------------------------------------
+
     if item is None:
-        flash("Product not found.")
-        return redirect(url_for("shop"))
+
+        flash(
+            "Product not found."
+        )
+
+        return redirect(
+            url_for(
+                "shop"
+            )
+        )
+
+
+    # --------------------------------------------------------
+    # STOP CHECKOUT IF PRODUCT IS SOLD
+    # --------------------------------------------------------
+
+    if item["sold"]:
+
+        flash(
+            "Sorry, this product is SOLD OUT."
+        )
+
+        return redirect(
+
+            url_for(
+
+                "product",
+
+                product_id=product_id
+
+            )
+
+        )
+
+
+    # --------------------------------------------------------
+    # PRODUCT SIZES
+    # --------------------------------------------------------
 
     sizes = []
+
 
     if item["sizes"]:
 
         sizes = [
+
             size.strip()
-            for size in item["sizes"].split(",")
+
+            for size in item[
+                "sizes"
+            ].split(",")
+
             if size.strip()
+
         ]
+
+
+    # --------------------------------------------------------
+    # CHECKOUT FORM SUBMISSION
+    # --------------------------------------------------------
 
     if request.method == "POST":
 
@@ -430,142 +782,277 @@ def checkout(product_id):
             ""
         ).strip()
 
+
         phone = request.form.get(
             "phone",
             ""
         ).strip()
+
 
         address = request.form.get(
             "address",
             ""
         ).strip()
 
+
         size = request.form.get(
             "size",
             ""
         ).strip()
+
 
         quantity_text = request.form.get(
             "quantity",
             "1"
         ).strip()
 
+
         payment_method = request.form.get(
             "payment_method",
             "Pay on WhatsApp"
         ).strip()
 
-        try:
-            quantity = int(quantity_text)
-
-            if quantity < 1:
-                quantity = 1
-
-        except ValueError:
-            quantity = 1
-
-        if not customer_name:
-            flash("Please enter your name.")
-            return redirect(
-                url_for(
-                    "checkout",
-                    product_id=product_id
-                )
-            )
-
-        if not phone:
-            flash("Please enter your phone number.")
-            return redirect(
-                url_for(
-                    "checkout",
-                    product_id=product_id
-                )
-            )
-
-        if not address:
-            flash("Please enter your delivery address.")
-            return redirect(
-                url_for(
-                    "checkout",
-                    product_id=product_id
-                )
-            )
 
         # ----------------------------------------------------
-        # Save order
+        # QUANTITY
+        # ----------------------------------------------------
+
+        try:
+
+            quantity = int(
+                quantity_text
+            )
+
+            if quantity < 1:
+
+                quantity = 1
+
+
+        except ValueError:
+
+            quantity = 1
+
+
+        # ----------------------------------------------------
+        # VALIDATE NAME
+        # ----------------------------------------------------
+
+        if not customer_name:
+
+            flash(
+                "Please enter your name."
+            )
+
+            return redirect(
+
+                url_for(
+
+                    "checkout",
+
+                    product_id=product_id
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # VALIDATE PHONE
+        # ----------------------------------------------------
+
+        if not phone:
+
+            flash(
+                "Please enter your phone number."
+            )
+
+            return redirect(
+
+                url_for(
+
+                    "checkout",
+
+                    product_id=product_id
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # VALIDATE ADDRESS
+        # ----------------------------------------------------
+
+        if not address:
+
+            flash(
+                "Please enter your delivery address."
+            )
+
+            return redirect(
+
+                url_for(
+
+                    "checkout",
+
+                    product_id=product_id
+
+                )
+
+            )
+
+
+        # ----------------------------------------------------
+        # SAVE ORDER
         # ----------------------------------------------------
 
         connection = db()
 
+
         cursor = connection.execute("""
             INSERT INTO orders (
+
                 product_id,
+
                 customer_name,
+
                 phone,
+
                 address,
+
                 size,
+
                 quantity,
+
                 payment_method,
+
                 status
+
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?
+            )
+
         """, (
+
             product_id,
+
             customer_name,
+
             phone,
+
             address,
+
             size,
+
             quantity,
+
             payment_method,
+
             "Pending"
+
         ))
+
 
         order_id = cursor.lastrowid
 
+
         connection.commit()
+
         connection.close()
 
+
         # ----------------------------------------------------
-        # WhatsApp checkout
+        # WHATSAPP CHECKOUT
         # ----------------------------------------------------
 
         if payment_method.lower() in {
+
             "pay on whatsapp",
+
             "whatsapp",
+
             "pay via whatsapp"
+
         }:
 
-            message = (
-                f"Hello {BUSINESS_NAME},\n\n"
-                f"I would like to place an order.\n\n"
-                f"Order ID: #{order_id}\n"
-                f"Product: {item['name']}\n"
-                f"Category: {item['category']}\n"
-                f"Price: ₦{float(item['price']):,.2f}\n"
-                f"Size: {size or 'Not specified'}\n"
-                f"Quantity: {quantity}\n\n"
-                f"Customer Name: {customer_name}\n"
-                f"Phone: {phone}\n"
-                f"Delivery Address: {address}\n"
+
+            total = (
+                float(item["price"])
+                * quantity
             )
+
+
+            message = (
+
+                f"Hello {BUSINESS_NAME},\n\n"
+
+                f"I would like to place an order.\n\n"
+
+                f"Order ID: #{order_id}\n"
+
+                f"Product: {item['name']}\n"
+
+                f"Category: {item['category']}\n"
+
+                f"Price: ₦{float(item['price']):,.2f}\n"
+
+                f"Quantity: {quantity}\n"
+
+                f"Total: ₦{total:,.2f}\n"
+
+                f"Size: {size or 'Not specified'}\n\n"
+
+                f"Customer Name: {customer_name}\n"
+
+                f"Phone: {phone}\n"
+
+                f"Delivery Address: {address}\n"
+
+            )
+
 
             return redirect(
-                whatsapp_url(message)
+                whatsapp_url(
+                    message
+                )
             )
 
+
+        # ----------------------------------------------------
+        # OTHER PAYMENT PAGE
+        # ----------------------------------------------------
+
         return render_template(
+
             "payment.html",
+
             product=item,
+
             order_id=order_id,
+
             customer_name=customer_name,
+
             quantity=quantity,
+
             size=size
+
         )
 
+
+    # --------------------------------------------------------
+    # DISPLAY CHECKOUT
+    # --------------------------------------------------------
+
     return render_template(
+
         "checkout.html",
+
         product=item,
+
         sizes=sizes
+
     )
 
 
@@ -573,11 +1060,25 @@ def checkout(product_id):
 # ADMIN LOGIN
 # ============================================================
 
-@app.route("/admin/login", methods=["GET", "POST"])
+@app.route(
+    "/admin/login",
+    methods=[
+        "GET",
+        "POST"
+    ]
+)
 def admin_login():
 
-    if session.get("admin_logged_in"):
-        return redirect(url_for("admin"))
+    if session.get(
+        "admin_logged_in"
+    ):
+
+        return redirect(
+            url_for(
+                "admin"
+            )
+        )
+
 
     if request.method == "POST":
 
@@ -586,22 +1087,22 @@ def admin_login():
             ""
         ).strip()
 
+
         password = request.form.get(
             "password",
             ""
         )
 
+
         admin_username = os.environ.get(
             "ADMIN_USERNAME"
         )
+
 
         admin_password = os.environ.get(
             "ADMIN_PASSWORD"
         )
 
-        # ----------------------------------------------------
-        # Environment variables are required in production.
-        # ----------------------------------------------------
 
         if (
             admin_username
@@ -610,15 +1111,22 @@ def admin_login():
             and password == admin_password
         ):
 
-            session["admin_logged_in"] = True
+            session[
+                "admin_logged_in"
+            ] = True
+
 
             return redirect(
-                url_for("admin")
+                url_for(
+                    "admin"
+                )
             )
+
 
         flash(
             "Invalid username or password."
         )
+
 
     return render_template(
         "admin_login.html"
@@ -629,7 +1137,9 @@ def admin_login():
 # ADMIN LOGOUT
 # ============================================================
 
-@app.route("/admin/logout")
+@app.route(
+    "/admin/logout"
+)
 def admin_logout():
 
     session.pop(
@@ -637,109 +1147,151 @@ def admin_logout():
         None
     )
 
+
     return redirect(
-        url_for("admin_login")
+        url_for(
+            "admin_login"
+        )
     )
 
 
 # ============================================================
-# ADMIN DASHBOARD / PRODUCT UPLOAD
+# ADMIN DASHBOARD / ADD PRODUCT
 # ============================================================
 
-@app.route("/admin", methods=["GET", "POST"])
+@app.route(
+    "/admin",
+    methods=[
+        "GET",
+        "POST"
+    ]
+)
 @admin_required
 def admin():
 
-    if request.method == "POST":
+    # --------------------------------------------------------
+    # ADD PRODUCT
+    # --------------------------------------------------------
 
-        # ----------------------------------------------------
-        # Product information
-        # ----------------------------------------------------
+    if request.method == "POST":
 
         name = request.form.get(
             "name",
             ""
         ).strip()
 
+
         category = request.form.get(
             "category",
             ""
         ).strip()
 
-        category = normalize_category(category)
+
+        category = normalize_category(
+            category
+        )
+
 
         price_text = request.form.get(
             "price",
             "0"
         ).strip()
 
+
         old_price_text = request.form.get(
             "old_price",
             ""
         ).strip()
+
 
         description = request.form.get(
             "description",
             ""
         ).strip()
 
+
         sizes = request.form.get(
             "sizes",
             ""
         ).strip()
 
-        featured = 1 if request.form.get(
-            "featured"
-        ) else 0
+
+        featured = (
+            1
+            if request.form.get(
+                "featured"
+            )
+            else 0
+        )
+
 
         # ----------------------------------------------------
-        # Validate product name
+        # VALIDATE PRODUCT NAME
         # ----------------------------------------------------
 
         if not name:
 
-            flash("Please enter a product name.")
-
-            return redirect(
-                url_for("admin")
+            flash(
+                "Please enter a product name."
             )
 
+            return redirect(
+                url_for(
+                    "admin"
+                )
+            )
+
+
         # ----------------------------------------------------
-        # Validate category
+        # VALIDATE CATEGORY
         # ----------------------------------------------------
 
         if not category:
 
-            flash("Please select a product category.")
-
-            return redirect(
-                url_for("admin")
+            flash(
+                "Please select a product category."
             )
 
+            return redirect(
+                url_for(
+                    "admin"
+                )
+            )
+
+
         # ----------------------------------------------------
-        # Validate price
+        # VALIDATE PRICE
         # ----------------------------------------------------
 
         try:
 
-            price = float(price_text)
+            price = float(
+                price_text
+            )
 
             if price < 0:
                 raise ValueError
 
+
         except ValueError:
 
-            flash("Please enter a valid product price.")
-
-            return redirect(
-                url_for("admin")
+            flash(
+                "Please enter a valid product price."
             )
 
+            return redirect(
+                url_for(
+                    "admin"
+                )
+            )
+
+
         # ----------------------------------------------------
-        # Old price
+        # OLD PRICE
         # ----------------------------------------------------
 
         old_price = None
+
 
         if old_price_text:
 
@@ -750,14 +1302,17 @@ def admin():
                 )
 
                 if old_price < 0:
+
                     old_price = None
+
 
             except ValueError:
 
                 old_price = None
 
+
         # ----------------------------------------------------
-        # Automatic sizes
+        # AUTOMATIC SIZES
         # ----------------------------------------------------
 
         if not sizes:
@@ -765,6 +1320,7 @@ def admin():
             sizes = default_sizes(
                 category
             )
+
 
         # ----------------------------------------------------
         # IMAGE UPLOAD
@@ -774,7 +1330,9 @@ def admin():
             "image"
         )
 
+
         filename = None
+
 
         if image and image.filename:
 
@@ -788,12 +1346,16 @@ def admin():
                 )
 
                 return redirect(
-                    url_for("admin")
+                    url_for(
+                        "admin"
+                    )
                 )
+
 
             original_filename = secure_filename(
                 image.filename
             )
+
 
             if not original_filename:
 
@@ -802,8 +1364,11 @@ def admin():
                 )
 
                 return redirect(
-                    url_for("admin")
+                    url_for(
+                        "admin"
+                    )
                 )
+
 
             if "." not in original_filename:
 
@@ -812,8 +1377,11 @@ def admin():
                 )
 
                 return redirect(
-                    url_for("admin")
+                    url_for(
+                        "admin"
+                    )
                 )
+
 
             extension = (
                 original_filename
@@ -821,21 +1389,27 @@ def admin():
                 .lower()
             )
 
+
             filename = (
                 f"{uuid.uuid4().hex}."
                 f"{extension}"
             )
 
+
             image_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
+                app.config[
+                    "UPLOAD_FOLDER"
+                ],
                 filename
             )
+
 
             try:
 
                 image.save(
                     image_path
                 )
+
 
             except Exception:
 
@@ -844,8 +1418,11 @@ def admin():
                 )
 
                 return redirect(
-                    url_for("admin")
+                    url_for(
+                        "admin"
+                    )
                 )
+
 
         # ----------------------------------------------------
         # SAVE PRODUCT
@@ -853,89 +1430,158 @@ def admin():
 
         connection = db()
 
+
         connection.execute("""
             INSERT INTO products (
+
                 name,
+
                 category,
+
                 price,
+
                 old_price,
+
                 description,
+
                 image,
+
                 featured,
-                sizes
+
+                sizes,
+
+                sold
+
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+
         """, (
+
             name,
+
             category,
+
             price,
+
             old_price,
+
             description,
+
             filename,
+
             featured,
-            sizes
+
+            sizes,
+
+            0
+
         ))
 
+
         connection.commit()
+
         connection.close()
+
 
         flash(
             "Product uploaded successfully."
         )
 
+
         return redirect(
-            url_for("admin")
+            url_for(
+                "admin"
+            )
         )
 
+
     # --------------------------------------------------------
-    # GET ADMIN DASHBOARD
+    # ADMIN DASHBOARD GET
     # --------------------------------------------------------
 
     connection = db()
 
+
     products = connection.execute("""
         SELECT *
+
         FROM products
-        ORDER BY created_at DESC, id DESC
+
+        ORDER BY
+            created_at DESC,
+            id DESC
     """).fetchall()
+
 
     orders = connection.execute("""
         SELECT
+
             orders.*,
-            products.name AS product_name
+
+            products.name
+            AS product_name,
+
+            products.price
+            AS product_price
+
         FROM orders
+
         LEFT JOIN products
-            ON orders.product_id = products.id
-        ORDER BY orders.created_at DESC, orders.id DESC
+
+            ON orders.product_id
+            = products.id
+
+        ORDER BY
+            orders.created_at DESC,
+            orders.id DESC
     """).fetchall()
+
 
     connection.close()
 
+
     return render_template(
+
         "admin.html",
+
         products=products,
+
         orders=orders
+
     )
 
 
 # ============================================================
-# DELETE PRODUCT
+# MARK PRODUCT SOLD / AVAILABLE
 # ============================================================
 
 @app.route(
-    "/admin/delete-product/<int:product_id>",
-    methods=["POST"]
+    "/admin/product/<int:product_id>/sold",
+    methods=[
+        "POST"
+    ]
 )
 @admin_required
-def delete_product(product_id):
+def toggle_sold(product_id):
 
     connection = db()
 
+
     product_item = connection.execute("""
-        SELECT *
+        SELECT
+            id,
+            sold
+
         FROM products
+
         WHERE id = ?
-    """, (product_id,)).fetchone()
+    """, (
+        product_id,
+    )).fetchone()
+
 
     if product_item is None:
 
@@ -946,46 +1592,166 @@ def delete_product(product_id):
         )
 
         return redirect(
-            url_for("admin")
+            url_for(
+                "admin"
+            )
         )
 
+
+    if product_item["sold"]:
+
+        new_status = 0
+
+    else:
+
+        new_status = 1
+
+
+    connection.execute("""
+        UPDATE products
+
+        SET sold = ?
+
+        WHERE id = ?
+    """, (
+
+        new_status,
+
+        product_id
+
+    ))
+
+
+    connection.commit()
+
+    connection.close()
+
+
+    if new_status == 1:
+
+        flash(
+            "Product marked as SOLD."
+        )
+
+    else:
+
+        flash(
+            "Product marked as AVAILABLE."
+        )
+
+
+    return redirect(
+        url_for(
+            "admin"
+        )
+    )
+
+
+# ============================================================
+# DELETE PRODUCT
+# ============================================================
+
+@app.route(
+    "/admin/delete-product/<int:product_id>",
+    methods=[
+        "POST"
+    ]
+)
+@admin_required
+def delete_product(product_id):
+
+    connection = db()
+
+
+    product_item = connection.execute("""
+        SELECT *
+
+        FROM products
+
+        WHERE id = ?
+    """, (
+        product_id,
+    )).fetchone()
+
+
+    if product_item is None:
+
+        connection.close()
+
+
+        flash(
+            "Product not found."
+        )
+
+
+        return redirect(
+            url_for(
+                "admin"
+            )
+        )
+
+
     # --------------------------------------------------------
-    # Delete image from uploads folder
+    # DELETE PRODUCT IMAGE
     # --------------------------------------------------------
 
     if product_item["image"]:
 
         image_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            product_item["image"]
+
+            app.config[
+                "UPLOAD_FOLDER"
+            ],
+
+            product_item[
+                "image"
+            ]
+
         )
 
-        if os.path.exists(image_path):
+
+        if os.path.exists(
+            image_path
+        ):
 
             try:
-                os.remove(image_path)
+
+                os.remove(
+                    image_path
+                )
 
             except OSError:
+
                 pass
 
+
     # --------------------------------------------------------
-    # Delete product
+    # DELETE PRODUCT FROM DATABASE
     # --------------------------------------------------------
 
     connection.execute("""
         DELETE FROM products
+
         WHERE id = ?
-    """, (product_id,))
+    """, (
+        product_id,
+    ))
+
 
     connection.commit()
+
     connection.close()
+
 
     flash(
         "Product deleted successfully."
     )
 
+
     return redirect(
-        url_for("admin")
+        url_for(
+            "admin"
+        )
     )
 
 
@@ -995,7 +1761,9 @@ def delete_product(product_id):
 
 @app.route(
     "/admin/order/<int:order_id>/status",
-    methods=["POST"]
+    methods=[
+        "POST"
+    ]
 )
 @admin_required
 def update_order_status(order_id):
@@ -1005,49 +1773,73 @@ def update_order_status(order_id):
         "Pending"
     ).strip()
 
+
     allowed_statuses = {
+
         "Pending",
+
         "Confirmed",
+
         "Processing",
+
         "Shipped",
+
         "Delivered",
+
         "Cancelled"
+
     }
+
 
     if status not in allowed_statuses:
 
         status = "Pending"
 
+
     connection = db()
+
 
     connection.execute("""
         UPDATE orders
+
         SET status = ?
+
         WHERE id = ?
     """, (
+
         status,
+
         order_id
+
     ))
 
+
     connection.commit()
+
     connection.close()
+
 
     flash(
         "Order status updated."
     )
 
+
     return redirect(
-        url_for("admin")
+        url_for(
+            "admin"
+        )
     )
 
 
 # ============================================================
-# CUSTOMER SERVICE - WEBSITE API
+# CUSTOMER SERVICE - WEBSITE CHAT API
 # ============================================================
 
 @app.route(
     "/customer-service",
-    methods=["POST"]
+    methods=[
+        "POST"
+    ]
 )
 def customer_service():
 
@@ -1055,197 +1847,319 @@ def customer_service():
         silent=True
     ) or {}
 
+
     message = data.get(
         "message",
         ""
     ).strip().lower()
 
+
     if not message:
 
         return {
+
             "reply":
                 "Please type a message so we can help you."
+
         }
 
+
     # --------------------------------------------------------
-    # Greetings
+    # GREETINGS
     # --------------------------------------------------------
 
     if any(
+
         word in message
+
         for word in [
+
             "hello",
+
             "hi",
+
             "hey",
+
             "good morning",
+
             "good afternoon",
+
             "good evening"
+
         ]
+
     ):
 
         reply = (
+
             f"Hello! Welcome to {BUSINESS_NAME}. 😊\n\n"
+
             "How can we help you today?"
+
         )
 
+
     # --------------------------------------------------------
-    # Products
+    # PRODUCTS
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "product",
+
             "dress",
+
             "wear",
+
             "shoe",
+
             "shoes",
+
             "bag",
+
             "bags",
+
             "jewellery",
+
             "jewelry",
+
             "accessories"
+
         ]
+
     ):
 
         reply = (
+
             "We currently offer:\n\n"
+
             "• Luxury Wears\n"
+
             "• Shoes\n"
+
             "• Bags\n"
+
             "• Jewellery & Accessories\n\n"
+
             "Please tell us which product you are interested in."
+
         )
 
+
     # --------------------------------------------------------
-    # Price
+    # PRICE
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "price",
+
             "cost",
+
             "how much"
+
         ]
+
     ):
 
         reply = (
+
             "Please tell us the name of the product "
+
             "you are interested in and we will help "
+
             "you with the price."
+
         )
 
+
     # --------------------------------------------------------
-    # Order
+    # ORDER
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "order",
+
             "buy",
+
             "purchase"
+
         ]
+
     ):
 
         reply = (
+
             "To place an order, please provide:\n\n"
+
             "1. Product name\n"
+
             "2. Size\n"
+
             "3. Quantity\n"
+
             "4. Delivery location\n"
+
             "5. Phone number"
+
         )
 
+
     # --------------------------------------------------------
-    # Delivery
+    # DELIVERY
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "delivery",
+
             "shipping",
+
             "deliver"
+
         ]
+
     ):
 
         reply = (
+
             "Delivery is available across Nigeria.\n\n"
+
             "Please send us your city or state "
+
             "so we can assist you with delivery information."
+
         )
 
+
     # --------------------------------------------------------
-    # Payment
+    # PAYMENT
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "payment",
+
             "pay",
+
             "transfer",
+
             "bank"
+
         ]
+
     ):
 
         reply = (
+
             "We can assist you with payment and "
+
             "WhatsApp order confirmation.\n\n"
+
             "Please contact us on WhatsApp for payment instructions."
+
         )
 
+
     # --------------------------------------------------------
-    # Human agent
+    # HUMAN AGENT
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "human",
+
             "agent",
+
             "representative",
+
             "person",
+
             "call"
+
         ]
+
     ):
 
         reply = (
+
             f"Customer Service Phone: {PHONE_NUMBER}\n\n"
+
             "You can also contact us directly on WhatsApp."
+
         )
 
+
     # --------------------------------------------------------
-    # Thank you
+    # THANK YOU
     # --------------------------------------------------------
 
     elif any(
+
         word in message
+
         for word in [
+
             "thanks",
+
             "thank you",
+
             "thank"
+
         ]
+
     ):
 
         reply = (
+
             "You're welcome! ❤️\n\n"
+
             f"Thank you for shopping with {BUSINESS_NAME}."
+
         )
 
+
     # --------------------------------------------------------
-    # Default
+    # DEFAULT
     # --------------------------------------------------------
 
     else:
 
         reply = (
+
             f"Thank you for contacting {BUSINESS_NAME}.\n\n"
+
             "Please tell us whether you need help with "
+
             "products, prices, orders, delivery or payment."
+
         )
+
 
     return {
         "reply": reply
@@ -1256,21 +2170,29 @@ def customer_service():
 # WHATSAPP CUSTOMER SERVICE
 # ============================================================
 
-@app.route("/whatsapp")
+@app.route(
+    "/whatsapp"
+)
 def whatsapp():
 
     message = (
+
         f"Hello {BUSINESS_NAME}, "
+
         "I need assistance with your products."
+
     )
 
+
     return redirect(
-        whatsapp_url(message)
+        whatsapp_url(
+            message
+        )
     )
 
 
 # ============================================================
-# ERROR HANDLERS
+# ERROR HANDLER - 404
 # ============================================================
 
 @app.errorhandler(404)
@@ -1281,16 +2203,26 @@ def page_not_found(error):
     ), 404
 
 
+# ============================================================
+# ERROR HANDLER - FILE TOO LARGE
+# ============================================================
+
 @app.errorhandler(413)
 def file_too_large(error):
 
     flash(
+
         "The uploaded file is too large. "
+
         "Maximum size is 10 MB."
+
     )
 
+
     return redirect(
-        url_for("admin")
+        url_for(
+            "admin"
+        )
     )
 
 
@@ -1301,12 +2233,18 @@ def file_too_large(error):
 if __name__ == "__main__":
 
     app.run(
+
         host="0.0.0.0",
+
         port=int(
+
             os.environ.get(
                 "PORT",
                 5000
             )
+
         ),
+
         debug=False
+
     )
