@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Shop — RUTHELYN COLLECTIONS{% endblock %}
+{% block title %}
+{% if selected_category %}
+{{ selected_category }} | RUTHELYN COLLECTIONS Nigeria
+{% else %}
+Shop Women's Fashion Online | RUTHELYN COLLECTIONS Nigeria
+{% endif %}
+{% endblock %}
+
+{% block meta_description %}
+{% if selected_category %}
+Shop {{ selected_category }} at RUTHELYN COLLECTIONS. Discover stylish women's fashion with delivery in Lagos, Abuja, Port Harcourt and across Nigeria.
+{% else %}
+Shop women's dresses, luxury wears, shoes, bags, jewellery and accessories online at RUTHELYN COLLECTIONS. Delivery available across Nigeria.
+{% endif %}
+{% endblock %}
 
 {% block content %}
 
