@@ -29,7 +29,14 @@ Shop {{ product.name }} at RUTHELYN COLLECTIONS. Explore stylish women's fashion
     "priceCurrency": "NGN",
     "price": "{{ product.price }}",
     "availability": "{% if product.sold %}https://schema.org/OutOfStock{% else %}https://schema.org/InStock{% endif %}",
-    "url": "{{ request.url }}"
+"url": "{{ request.url }}",
+"hasMerchantReturnPolicy": {
+  "@type": "MerchantReturnPolicy",
+  "applicableCountry": "NG",
+  "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+  "merchantReturnDays": 3,
+  "returnMethod": "https://schema.org/ReturnByMail"
+}
   }
   {% if product.image %},
   "image": "{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='uploads/' + product.image) }}"
