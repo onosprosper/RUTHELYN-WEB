@@ -7,3 +7,51 @@
 @media(max-width:900px){.header-inner{grid-template-columns:auto 1fr auto}.menu-toggle{display:block}.main-nav{display:none;position:absolute;left:0;right:0;top:79px;background:var(--paper);padding:25px;flex-direction:column;box-shadow:0 15px 30px #0001}.nav-open .main-nav{display:flex}.brand{justify-self:center}.hero{grid-template-columns:1fr;min-height:auto;padding-top:45px}.hero-visual{height:430px}.category-grid{grid-template-columns:repeat(2,1fr)}.product-grid{grid-template-columns:repeat(2,1fr)}.editorial{grid-template-columns:1fr}.editorial-image{min-height:400px}.social-strip{flex-direction:column;align-items:flex-start}.footer-grid{grid-template-columns:1fr 1fr}.product-page{grid-template-columns:1fr;gap:30px}.product-gallery{max-height:700px}.shop-filter{grid-template-columns:1fr 160px}.shop-filter .btn{grid-column:1/-1}.header-actions{gap:10px}.hero h1{font-size:64px}.section-heading h2{font-size:38px}}
 @media(max-width:560px){.header-inner{padding:10px 15px}.brand img{width:40px;height:40px}.brand b{font-size:14px}.header-actions a:first-child{display:none}.hero{padding:35px 18px}.hero h1{font-size:53px;letter-spacing:-2px}.hero-visual{height:350px}.hero-buttons{flex-direction:column;align-items:flex-start}.section{padding:65px 18px}.section-heading{align-items:flex-start;gap:15px;flex-direction:column}.category-grid,.product-grid{grid-template-columns:1fr 1fr;gap:10px}.category-tile{min-height:260px;padding:16px}.category-tile h3{font-size:20px}.newsletter h2{font-size:34px}.social-links{width:100%;flex-direction:column}.footer-grid{grid-template-columns:1fr}.shop-hero{padding:65px 20px}.shop-hero h1{font-size:52px}.shop-filter{grid-template-columns:1fr}.product-detail h1{font-size:42px}.confirmation h1{font-size:43px}.chat-panel{right:10px;left:10px;width:auto}.whatsapp-float{right:12px;bottom:12px}.chat-trigger{right:12px;bottom:64px}}
 .home-video-section{max-width:1320px;margin:auto;padding:90px 28px 30px}.home-video-heading{display:flex;justify-content:space-between;align-items:end;gap:40px;margin-bottom:34px}.home-video-heading h2{font-size:44px;margin:9px 0 0}.home-video-heading p{max-width:420px;color:var(--muted);line-height:1.7;margin:0}.home-video-wrap{background:var(--cream);overflow:hidden}.home-video{display:block;width:100%;max-height:720px;aspect-ratio:16/9;object-fit:cover;background:#111}@media(max-width:900px){.home-video-heading{align-items:flex-start;flex-direction:column;gap:15px}.home-video-heading h2{font-size:38px}}@media(max-width:560px){.home-video-section{padding:65px 18px 20px}.home-video-heading h2{font-size:34px}.home-video{aspect-ratio:16/9}}
+/* ========================================
+   CUSTOMER TRUST / POLICY PAGES
+======================================== */
+
+.policy-page {
+  padding: 80px 6%;
+  background: #f8f6f2;
+  min-height: 60vh;
+}
+
+.policy-wrap {
+  max-width: 850px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 50px;
+}
+
+.policy-wrap h1 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.1;
+  margin: 10px 0 30px;
+}
+
+.policy-wrap h2 {
+  font-family: "Playfair Display", serif;
+  font-size: 24px;
+  margin: 32px 0 10px;
+}
+
+.policy-wrap p {
+  line-height: 1.8;
+  margin: 0 0 18px;
+}
+
+.policy-wrap a {
+  color: inherit;
+}
+
+@media (max-width: 600px) {
+  .policy-page {
+    padding: 45px 5%;
+  }
+
+  .policy-wrap {
+    padding: 30px 22px;
+  }
+}
