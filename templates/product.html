@@ -12,6 +12,7 @@ Shop {{ product.name }} at RUTHELYN COLLECTIONS. Explore stylish women's fashion
 {% endif %}
 {% endblock %}
 
+{% block structured_data %}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -35,6 +36,7 @@ Shop {{ product.name }} at RUTHELYN COLLECTIONS. Explore stylish women's fashion
   {% endif %}
 }
 </script>
+{% endblock %}
 
 {% block content %}
 
