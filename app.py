@@ -507,7 +507,44 @@ def inject_store_context():
         "product_image_src": product_image_src
     }
 
+# ================================
+# CUSTOMER TRUST PAGES
+# ================================
 
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+
+@app.route("/delivery")
+def delivery():
+    return render_template("delivery.html")
+
+
+@app.route("/returns")
+def returns():
+    return render_template("returns.html")
+
+
+@app.route("/faq")
+def faq():
+    return render_template("faq.html")
+
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+    
 # ============================================================
 # ADMIN AUTHENTICATION DECORATOR
 # ============================================================
