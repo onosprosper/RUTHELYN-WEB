@@ -6,17 +6,25 @@ from flask import (
     url_for,
     flash,
     session,
-    Response
+    Response,
+    send_from_directory,
+    render_template_string
 )
 
 from functools import wraps
-from urllib.parse import quote
+from urllib.parse import quote, urlparse, unquote
 from werkzeug.utils import secure_filename
 
-import sqlite3
+import psycopg
+from psycopg.rows import dict_row
+import cloudinary
+import cloudinary.uploader
+import cloudinary.utils
 import os
 import uuid
 import json
+import io
+import zipfile
 from datetime import datetime, timezone
 
 
@@ -43,10 +51,10 @@ app.config["SECRET_KEY"] = os.environ.get(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATABASE = os.path.join(
-    BASE_DIR,
-    "ruthelyn.db"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not configured.")
 
 
 # ============================================================
@@ -129,120 +137,74 @@ ALLOWED_EXTENSIONS = {
 
 
 # ============================================================
-# DATABASE CONNECTION
+# DATABASE CONNECTION / INITIALIZATION
 # ============================================================
+
+class DatabaseConnection:
+    """Small compatibility wrapper so existing SQLite-style ? placeholders work with PostgreSQL."""
+
+    def __init__(self):
+        self.connection = psycopg.connect(
+            DATABASE_URL,
+            row_factory=dict_row
+        )
+
+    def execute(self, query, params=None):
+        postgres_query = query.replace("?", "%s")
+        return self.connection.execute(
+            postgres_query,
+            params or ()
+        )
+
+    def commit(self):
+        self.connection.commit()
+
+    def rollback(self):
+        self.connection.rollback()
+
+    def close(self):
+        self.connection.close()
+
 
 def db():
+    return DatabaseConnection()
 
-    connection = sqlite3.connect(
-        DATABASE
-    )
-
-    connection.row_factory = sqlite3.Row
-
-    return connection
-
-
-# ============================================================
-# DATABASE INITIALIZATION
-# ============================================================
 
 def init_db():
-
     connection = db()
-
-
-    # --------------------------------------------------------
-    # PRODUCTS TABLE
-    # --------------------------------------------------------
 
     connection.execute("""
         CREATE TABLE IF NOT EXISTS products (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
+            id BIGSERIAL PRIMARY KEY,
             name TEXT NOT NULL,
-
             category TEXT NOT NULL,
-
-            price REAL NOT NULL,
-
-            old_price REAL,
-
+            price DOUBLE PRECISION NOT NULL,
+            old_price DOUBLE PRECISION,
             description TEXT,
-
             image TEXT,
-
             featured INTEGER DEFAULT 0,
-
             sizes TEXT,
-
             sold INTEGER DEFAULT 0,
-
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
         )
     """)
-
-
-    # --------------------------------------------------------
-    # ADD SOLD COLUMN TO OLD DATABASE IF NEEDED
-    # --------------------------------------------------------
-
-    product_columns = connection.execute(
-        "PRAGMA table_info(products)"
-    ).fetchall()
-
-    product_column_names = [
-        row["name"]
-        for row in product_columns
-    ]
-
-
-    if "sold" not in product_column_names:
-
-        connection.execute("""
-            ALTER TABLE products
-            ADD COLUMN sold INTEGER DEFAULT 0
-        """)
-
-
-    # --------------------------------------------------------
-    # ORDERS TABLE
-    # --------------------------------------------------------
 
     connection.execute("""
         CREATE TABLE IF NOT EXISTS orders (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            product_id INTEGER,
-
+            id BIGSERIAL PRIMARY KEY,
+            product_id BIGINT REFERENCES products(id) ON DELETE SET NULL,
             customer_name TEXT,
-
             phone TEXT,
-
             address TEXT,
-
             size TEXT,
-
             quantity INTEGER DEFAULT 1,
-
             payment_method TEXT,
-
             status TEXT DEFAULT 'Pending',
-
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY(product_id)
-            REFERENCES products(id)
-
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-
     connection.commit()
-
     connection.close()
 
 
@@ -265,6 +227,72 @@ def allowed(filename):
     )
 
     return extension in ALLOWED_EXTENSIONS
+
+
+# ============================================================
+# CLOUDINARY IMAGE HELPERS
+# ============================================================
+
+CLOUDINARY_URL = os.environ.get("CLOUDINARY_URL", "").strip()
+
+if not CLOUDINARY_URL:
+    raise RuntimeError("CLOUDINARY_URL is not configured.")
+
+_cloudinary_parts = urlparse(CLOUDINARY_URL)
+
+if (
+    _cloudinary_parts.scheme != "cloudinary"
+    or not _cloudinary_parts.hostname
+    or not _cloudinary_parts.username
+    or not _cloudinary_parts.password
+):
+    raise RuntimeError("CLOUDINARY_URL is not valid.")
+
+cloudinary.config(
+    cloud_name=_cloudinary_parts.hostname,
+    api_key=unquote(_cloudinary_parts.username),
+    api_secret=unquote(_cloudinary_parts.password),
+    secure=True
+)
+
+
+def upload_product_image(file_object, public_id=None):
+    options = {
+        "folder": "ruthelyn_products",
+        "resource_type": "image",
+        "overwrite": False
+    }
+
+    if public_id:
+        options["public_id"] = public_id
+        options["overwrite"] = True
+
+    result = cloudinary.uploader.upload(
+        file_object,
+        **options
+    )
+
+    return result["public_id"]
+
+
+def delete_product_image(image_value):
+    if not image_value:
+        return
+
+    image_value = str(image_value).strip()
+
+    # Old local filenames are not Cloudinary public IDs.
+    if image_value.startswith(("http://", "https://")):
+        return
+
+    try:
+        cloudinary.uploader.destroy(
+            image_value,
+            invalidate=True,
+            resource_type="image"
+        )
+    except Exception:
+        pass
 
 
 # ============================================================
@@ -383,15 +411,49 @@ def absolute_url(path="/"):
 
 def product_image_url(item):
     if item and item["image"]:
-        return absolute_url(
-            url_for(
-                "static",
-                filename="uploads/" + item["image"]
-            )
-        )
+        image_value = str(item["image"]).strip()
+        if image_value.startswith(("http://", "https://")):
+            return image_value
+        return cloudinary.CloudinaryImage(
+            image_value
+        ).build_url(secure=True)
+
     return absolute_url(
         url_for("static", filename="logo.jpg")
     )
+
+
+def product_image_src(image_value):
+    if not image_value:
+        return url_for("static", filename="logo.jpg")
+
+    image_value = str(image_value).strip()
+    if image_value.startswith(("http://", "https://")):
+        return image_value
+
+    return cloudinary.CloudinaryImage(
+        image_value
+    ).build_url(secure=True)
+
+
+def static_with_cloudinary(filename):
+    if filename.startswith("uploads/"):
+        public_id = filename[len("uploads/"):].strip("/")
+        if public_id:
+            return redirect(
+                cloudinary.CloudinaryImage(public_id).build_url(secure=True),
+                code=302
+            )
+
+    return send_from_directory(
+        app.static_folder,
+        filename
+    )
+
+
+# Existing templates already use url_for('static', filename='uploads/...').
+# Keep those templates working while product images live permanently on Cloudinary.
+app.view_functions["static"] = static_with_cloudinary
 
 
 def build_product_schema(item):
@@ -444,7 +506,8 @@ def inject_store_context():
         "phone_number": PHONE_NUMBER,
         "default_seo_title": DEFAULT_SEO_TITLE,
         "default_seo_description": DEFAULT_SEO_DESCRIPTION,
-        "target_cities": TARGET_CITIES
+        "target_cities": TARGET_CITIES,
+        "product_image_src": product_image_src
     }
 
 
@@ -1086,6 +1149,7 @@ def checkout(product_id):
             VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?
             )
+            RETURNING id
 
         """, (
 
@@ -1108,7 +1172,8 @@ def checkout(product_id):
         ))
 
 
-        order_id = cursor.lastrowid
+        order_row = cursor.fetchone()
+        order_id = order_row["id"]
 
 
         connection.commit()
@@ -1536,44 +1601,16 @@ def admin():
                 )
 
 
-            extension = (
-                original_filename
-                .rsplit(".", 1)[1]
-                .lower()
-            )
-
-
-            filename = (
-                f"{uuid.uuid4().hex}."
-                f"{extension}"
-            )
-
-
-            image_path = os.path.join(
-                app.config[
-                    "UPLOAD_FOLDER"
-                ],
-                filename
-            )
-
-
             try:
-
-                image.save(
-                    image_path
+                filename = upload_product_image(
+                    image
                 )
-
-
             except Exception:
-
                 flash(
                     "There was a problem uploading the image."
                 )
-
                 return redirect(
-                    url_for(
-                        "admin"
-                    )
+                    url_for("admin")
                 )
 
 
@@ -1919,36 +1956,15 @@ def edit_product(product_id):
                     )
                 )
 
-            extension = (
-                original_filename
-                .rsplit(".", 1)[1]
-                .lower()
-            )
-
-            new_filename = (
-                f"{uuid.uuid4().hex}."
-                f"{extension}"
-            )
-
-            new_image_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                new_filename
-            )
-
             try:
-                image.save(
-                    new_image_path
+                new_filename = upload_product_image(
+                    image
                 )
-
             except Exception:
-
                 connection.close()
-
                 flash(
-                    "There was a problem "
-                    "uploading the image."
+                    "There was a problem uploading the image."
                 )
-
                 return redirect(
                     url_for(
                         "edit_product",
@@ -1956,27 +1972,7 @@ def edit_product(product_id):
                     )
                 )
 
-            # Delete old image
-            if filename:
-
-                old_image_path = os.path.join(
-                    app.config[
-                        "UPLOAD_FOLDER"
-                    ],
-                    filename
-                )
-
-                if os.path.exists(
-                    old_image_path
-                ):
-
-                    try:
-                        os.remove(
-                            old_image_path
-                        )
-                    except OSError:
-                        pass
-
+            delete_product_image(filename)
             filename = new_filename
 
         # ----------------------------------------
@@ -2169,37 +2165,12 @@ def delete_product(product_id):
 
 
     # --------------------------------------------------------
-    # DELETE PRODUCT IMAGE
+    # DELETE PRODUCT IMAGE FROM CLOUDINARY
     # --------------------------------------------------------
 
-    if product_item["image"]:
-
-        image_path = os.path.join(
-
-            app.config[
-                "UPLOAD_FOLDER"
-            ],
-
-            product_item[
-                "image"
-            ]
-
-        )
-
-
-        if os.path.exists(
-            image_path
-        ):
-
-            try:
-
-                os.remove(
-                    image_path
-                )
-
-            except OSError:
-
-                pass
+    delete_product_image(
+        product_item["image"]
+    )
 
 
     # --------------------------------------------------------
@@ -2811,6 +2782,208 @@ def add_response_headers(response):
     return response
 
 
+
+
+# ============================================================
+# ONE-TIME PRODUCT MIGRATION: JSON + IMAGE ZIP -> POSTGRES/CLOUDINARY
+# ============================================================
+
+@app.route(
+    "/admin/migrate-products",
+    methods=["GET", "POST"]
+)
+@admin_required
+def migrate_products():
+
+    if request.method == "GET":
+        return render_template_string("""
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>RUTHELYN Product Migration</title>
+            <style>
+                body{font-family:Arial,sans-serif;background:#f7f4ee;margin:0;padding:40px;color:#111}
+                .card{max-width:720px;margin:auto;background:#fff;padding:32px;border:1px solid #ddd}
+                h1{margin-top:0}.field{margin:20px 0}label{display:block;font-weight:700;margin-bottom:8px}
+                input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #bbb}
+                button{background:#111;color:#fff;border:0;padding:14px 22px;font-weight:700;cursor:pointer}
+                .note{background:#fff8df;padding:14px;margin:18px 0;line-height:1.6}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>Import Existing RUTHELYN Products</h1>
+                <p>Upload the two backup files you already saved.</p>
+                <div class="note">This imports product records into PostgreSQL and uploads the matching product images to Cloudinary.</div>
+                <form method="post" enctype="multipart/form-data">
+                    <div class="field">
+                        <label>Product JSON backup</label>
+                        <input type="file" name="products_json" accept=".json,application/json" required>
+                    </div>
+                    <div class="field">
+                        <label>Product image ZIP backup</label>
+                        <input type="file" name="images_zip" accept=".zip,application/zip" required>
+                    </div>
+                    <button type="submit">IMPORT PRODUCTS</button>
+                </form>
+            </div>
+        </body>
+        </html>
+        """)
+
+    json_file = request.files.get("products_json")
+    zip_file = request.files.get("images_zip")
+
+    if not json_file or not zip_file:
+        flash("Please select both the JSON backup and image ZIP backup.")
+        return redirect(url_for("migrate_products"))
+
+    try:
+        products = json.load(json_file)
+    except Exception:
+        flash("The product JSON backup could not be read.")
+        return redirect(url_for("migrate_products"))
+
+    if not isinstance(products, list):
+        flash("The product JSON backup is not in the expected format.")
+        return redirect(url_for("migrate_products"))
+
+    try:
+        archive = zipfile.ZipFile(zip_file)
+    except Exception:
+        flash("The image ZIP backup could not be opened.")
+        return redirect(url_for("migrate_products"))
+
+    zip_members = {
+        os.path.basename(name): name
+        for name in archive.namelist()
+        if name and not name.endswith("/")
+    }
+
+    connection = db()
+    imported = 0
+    missing_images = []
+
+    try:
+        for product in products:
+            product_id = int(product.get("id"))
+            original_image = (product.get("image") or "").strip()
+            cloudinary_public_id = None
+
+            if original_image:
+                member_name = zip_members.get(
+                    os.path.basename(original_image)
+                )
+
+                if member_name:
+                    image_bytes = archive.read(member_name)
+                    image_stream = io.BytesIO(image_bytes)
+                    image_stream.name = os.path.basename(original_image)
+
+                    stem = os.path.splitext(
+                        os.path.basename(original_image)
+                    )[0]
+
+                    cloudinary_public_id = upload_product_image(
+                        image_stream,
+                        public_id=f"migrated_{product_id}_{stem}"
+                    )
+                else:
+                    missing_images.append(original_image)
+
+            connection.execute("""
+                INSERT INTO products (
+                    id,
+                    name,
+                    category,
+                    price,
+                    old_price,
+                    description,
+                    image,
+                    featured,
+                    sizes,
+                    sold,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    category = EXCLUDED.category,
+                    price = EXCLUDED.price,
+                    old_price = EXCLUDED.old_price,
+                    description = EXCLUDED.description,
+                    image = EXCLUDED.image,
+                    featured = EXCLUDED.featured,
+                    sizes = EXCLUDED.sizes,
+                    sold = EXCLUDED.sold,
+                    created_at = EXCLUDED.created_at
+            """, (
+                product_id,
+                (product.get("name") or "").strip(),
+                normalize_category(
+                    (product.get("category") or "").strip()
+                ),
+                float(product.get("price") or 0),
+                product.get("old_price"),
+                product.get("description") or "",
+                cloudinary_public_id,
+                int(product.get("featured") or 0),
+                product.get("sizes") or "",
+                int(product.get("sold") or 0),
+                product.get("created_at") or datetime.now(timezone.utc).replace(tzinfo=None)
+            ))
+
+            imported += 1
+
+        connection.execute("""
+            SELECT setval(
+                pg_get_serial_sequence('products', 'id'),
+                GREATEST(COALESCE((SELECT MAX(id) FROM products), 1), 1),
+                true
+            )
+        """)
+
+        connection.commit()
+
+    except Exception as exc:
+        connection.rollback()
+        connection.close()
+        archive.close()
+        app.logger.exception("Product migration failed")
+        return render_template_string(
+            '<h2>Migration failed</h2><p>{{ message }}</p><p><a href="/admin/migrate-products">Try again</a></p>',
+            message=str(exc)
+        ), 500
+
+    connection.close()
+    archive.close()
+
+    missing_message = ""
+    if missing_images:
+        missing_message = (
+            " Missing images: "
+            + ", ".join(missing_images)
+        )
+
+    return render_template_string(
+        """
+        <!doctype html>
+        <html><head><meta charset="utf-8"><title>Migration Complete</title></head>
+        <body style="font-family:Arial,sans-serif;padding:40px">
+            <h1>Migration Complete</h1>
+            <p><strong>{{ imported }}</strong> products were imported into PostgreSQL.</p>
+            {% if missing_images %}<p><strong>Images not found in ZIP:</strong> {{ missing_images|join(', ') }}</p>{% endif %}
+            <p><a href="{{ url_for('admin') }}">Open Admin Dashboard</a></p>
+            <p><a href="{{ url_for('shop') }}">Open Shop</a></p>
+        </body></html>
+        """,
+        imported=imported,
+        missing_images=missing_images
+    )
+
+
 # ============================================================
 # ERROR HANDLER - 404
 # ============================================================
@@ -2867,102 +3040,4 @@ if __name__ == "__main__":
 
         debug=False
 
-    )
-    # ============================================================
-# TEMPORARY IMAGE BACKUP
-# Remove after migration is complete.
-# ============================================================
-
-@app.route("/admin/export-images")
-@admin_required
-def export_images():
-
-    import io
-    import zipfile
-
-    memory_file = io.BytesIO()
-
-    with zipfile.ZipFile(
-        memory_file,
-        "w",
-        zipfile.ZIP_DEFLATED
-    ) as zip_file:
-
-        if os.path.exists(
-            app.config["UPLOAD_FOLDER"]
-        ):
-
-            for filename in os.listdir(
-                app.config["UPLOAD_FOLDER"]
-            ):
-
-                file_path = os.path.join(
-                    app.config["UPLOAD_FOLDER"],
-                    filename
-                )
-
-                if os.path.isfile(file_path):
-
-                    zip_file.write(
-                        file_path,
-                        arcname=filename
-                    )
-
-    memory_file.seek(0)
-
-    return Response(
-        memory_file.getvalue(),
-        mimetype="application/zip",
-        headers={
-            "Content-Disposition":
-            "attachment; filename=ruthelyn_product_images.zip"
-        }
-    )
-# ============================================================
-# TEMPORARY PRODUCT BACKUP
-# Remove this route after PostgreSQL migration is complete.
-# ============================================================
-
-@app.route("/admin/export-products")
-@admin_required
-def export_products():
-
-    connection = db()
-
-    products = connection.execute("""
-        SELECT
-            id,
-            name,
-            category,
-            price,
-            old_price,
-            description,
-            image,
-            featured,
-            sizes,
-            sold,
-            created_at
-        FROM products
-        ORDER BY id ASC
-    """).fetchall()
-
-    connection.close()
-
-    product_data = [
-        dict(product)
-        for product in products
-    ]
-
-    return Response(
-        json.dumps(
-            product_data,
-            indent=2,
-            ensure_ascii=False,
-            default=str
-        ),
-        mimetype="application/json",
-        headers={
-            "Content-Disposition":
-            "attachment; filename=ruthelyn_products_backup.json"
-        }
     )
