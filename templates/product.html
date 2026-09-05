@@ -12,6 +12,30 @@ Shop {{ product.name }} at RUTHELYN COLLECTIONS. Explore stylish women's fashion
 {% endif %}
 {% endblock %}
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ product.name|tojson }},
+  "description": {{ (product.description or "A carefully selected Ruthelyn Collections fashion piece.")|tojson }},
+  "brand": {
+    "@type": "Brand",
+    "name": "RUTHELYN COLLECTIONS"
+  },
+  "category": {{ product.category|tojson }},
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "NGN",
+    "price": "{{ product.price }}",
+    "availability": "{% if product.sold %}https://schema.org/OutOfStock{% else %}https://schema.org/InStock{% endif %}",
+    "url": "{{ request.url }}"
+  }
+  {% if product.image %},
+  "image": "{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='uploads/' + product.image) }}"
+  {% endif %}
+}
+</script>
+
 {% block content %}
 
 <style>
