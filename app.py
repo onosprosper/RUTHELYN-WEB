@@ -2328,10 +2328,18 @@ def sitemap():
     connection.close()
 
     urls = [
-        (absolute_url("/"), None, "1.0", "daily"),
-        (absolute_url("/shop"), None, "0.9", "daily"),
-    ]
+    (absolute_url("/"), None, "1.0", "daily"),
+    (absolute_url("/shop"), None, "0.9", "daily"),
 
+    # Customer trust pages
+    (absolute_url(url_for("about")), None, "0.6", "monthly"),
+    (absolute_url(url_for("delivery")), None, "0.6", "monthly"),
+    (absolute_url(url_for("returns")), None, "0.6", "monthly"),
+    (absolute_url(url_for("faq")), None, "0.6", "monthly"),
+    (absolute_url(url_for("contact")), None, "0.6", "monthly"),
+    (absolute_url(url_for("privacy")), None, "0.4", "yearly"),
+    (absolute_url(url_for("terms")), None, "0.4", "yearly"),
+]
     for category in [
         "Luxury Wears",
         "Shoes",
