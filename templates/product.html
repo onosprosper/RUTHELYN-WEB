@@ -1,35 +1,21 @@
 {% extends "base.html" %}
 
 {% block title %}
-{{ product.name }} — RUTHELYN COLLECTIONS
+{{ product.name }} | RUTHELYN COLLECTIONS Nigeria
+{% endblock %}
+
+{% block meta_description %}
+{% if product.description %}
+Shop {{ product.name }} at RUTHELYN COLLECTIONS. {{ product.description }} Delivery available in Lagos, Abuja, Port Harcourt and across Nigeria.
+{% else %}
+Shop {{ product.name }} at RUTHELYN COLLECTIONS. Explore stylish women's fashion with delivery in Lagos, Abuja, Port Harcourt and across Nigeria.
+{% endif %}
 {% endblock %}
 
 {% block content %}
 
 <style>
-
-  .product-gallery {
-    position: relative;
-  }
-
-  .product-gallery img {
-    width: 100%;
-    display: block;
-  }
-
-  .product-sold-badge {
-    position: absolute;
-    top: 18px;
-    left: 18px;
-    background: #111;
-    color: #fff;
-    padding: 12px 18px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    z-index: 5;
-  }
-
+  
   .sold-product-image {
     opacity: 0.55;
   }
