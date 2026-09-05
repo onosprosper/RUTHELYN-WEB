@@ -55,34 +55,53 @@
     </div>
   </section>
 
-  <footer class="footer">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand">RUTHELYN COLLECTIONS</div>
-        <p>Elevated fashion for women who want to look unique, confident, polished and unforgettable.</p>
-      </div>
-      <div>
-        <h4>SHOP</h4>
-        <a href="{{ url_for('shop') }}">All Products</a>
-        <a href="{{ url_for('shop', category='Luxury Wears') }}">Luxury Wears</a>
-        <a href="{{ url_for('shop', category='Shoes') }}">Shoes</a>
-        <a href="{{ url_for('shop', category='Bags') }}">Bags</a>
-      </div>
-      <div>
-        <h4>CONNECT</h4>
-        <a href="https://www.tiktok.com/@ruth2nicee" target="_blank" rel="noopener">TikTok</a>
-        <a href="https://www.facebook.com/share/17u6f8tZXQ/" target="_blank" rel="noopener">Facebook</a>
-        <a href="https://wa.me/2348125506022" target="_blank" rel="noopener">WhatsApp: 08125506022</a>
-      </div>
-      <div>
-        <h4>VISIT / CONTACT</h4>
-        <p>IBA Estate,<br>IBA Estate, Lagos</p>
-        <a href="tel:+2348125506022">+234 812 550 6022</a>
-         <a href="tel:+2348153984064">+234 815 398 4068 </a>
-      </div>
+       <footer class="footer">
+  <div class="footer-grid">
+
+    <div>
+      <div class="footer-brand">RUTHELYN COLLECTIONS</div>
+      <p>Elevated fashion for women who want to look unique, confident, polished and unforgettable.</p>
     </div>
-    <div class="copyright">© 2026 Ruthelyn Collections. All rights reserved.</div>
-  </footer>
+
+    <div>
+      <h4>SHOP</h4>
+      <a href="{{ url_for('shop') }}">All Products</a>
+      <a href="{{ url_for('shop', category='Luxury Wears') }}">Luxury Wears</a>
+      <a href="{{ url_for('shop', category='Shoes') }}">Shoes</a>
+      <a href="{{ url_for('shop', category='Bags') }}">Bags</a>
+    </div>
+
+    <div>
+      <h4>CONNECT</h4>
+      <a href="https://www.tiktok.com/@ruth2nicee" target="_blank" rel="noopener">TikTok</a>
+      <a href="https://www.facebook.com/share/17u6f8tZXQ/" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://wa.me/2348125506022" target="_blank" rel="noopener">WhatsApp: 08125506022</a>
+    </div>
+
+    <div>
+      <h4>HELP</h4>
+      <a href="{{ url_for('about') }}">About Us</a>
+      <a href="{{ url_for('delivery') }}">Delivery Information</a>
+      <a href="{{ url_for('returns') }}">Returns & Exchanges</a>
+      <a href="{{ url_for('faq') }}">FAQ</a>
+      <a href="{{ url_for('contact') }}">Contact Us</a>
+      <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+      <a href="{{ url_for('terms') }}">Terms & Conditions</a>
+    </div>
+
+    <div>
+      <h4>VISIT / CONTACT</h4>
+      <p>IBA Estate,<br>IBA Estate, Lagos</p>
+      <a href="tel:+2348125506022">+234 812 550 6022</a>
+      <a href="tel:+2348153984064">+234 815 398 4064</a>
+    </div>
+
+  </div>
+
+  <div class="copyright">
+    © 2026 Ruthelyn Collections. All rights reserved.
+  </div>
+</footer>
 
   <a class="whatsapp-float" href="https://wa.me/2348125506022?text=Hello%20Ruthelyn%20Collections%2C%20I%20would%20like%20to%20make%20an%20enquiry." target="_blank" rel="noopener">WhatsApp</a>
   <script>
