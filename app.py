@@ -2868,6 +2868,56 @@ if __name__ == "__main__":
         debug=False
 
     )
+    # ============================================================
+# TEMPORARY IMAGE BACKUP
+# Remove after migration is complete.
+# ============================================================
+
+@app.route("/admin/export-images")
+@admin_required
+def export_images():
+
+    import io
+    import zipfile
+
+    memory_file = io.BytesIO()
+
+    with zipfile.ZipFile(
+        memory_file,
+        "w",
+        zipfile.ZIP_DEFLATED
+    ) as zip_file:
+
+        if os.path.exists(
+            app.config["UPLOAD_FOLDER"]
+        ):
+
+            for filename in os.listdir(
+                app.config["UPLOAD_FOLDER"]
+            ):
+
+                file_path = os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    filename
+                )
+
+                if os.path.isfile(file_path):
+
+                    zip_file.write(
+                        file_path,
+                        arcname=filename
+                    )
+
+    memory_file.seek(0)
+
+    return Response(
+        memory_file.getvalue(),
+        mimetype="application/zip",
+        headers={
+            "Content-Disposition":
+            "attachment; filename=ruthelyn_product_images.zip"
+        }
+    )
 # ============================================================
 # TEMPORARY PRODUCT BACKUP
 # Remove this route after PostgreSQL migration is complete.
