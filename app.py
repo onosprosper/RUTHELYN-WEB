@@ -2868,3 +2868,51 @@ if __name__ == "__main__":
         debug=False
 
     )
+# ============================================================
+# TEMPORARY PRODUCT BACKUP
+# Remove this route after PostgreSQL migration is complete.
+# ============================================================
+
+@app.route("/admin/export-products")
+@admin_required
+def export_products():
+
+    connection = db()
+
+    products = connection.execute("""
+        SELECT
+            id,
+            name,
+            category,
+            price,
+            old_price,
+            description,
+            image,
+            featured,
+            sizes,
+            sold,
+            created_at
+        FROM products
+        ORDER BY id ASC
+    """).fetchall()
+
+    connection.close()
+
+    product_data = [
+        dict(product)
+        for product in products
+    ]
+
+    return Response(
+        json.dumps(
+            product_data,
+            indent=2,
+            ensure_ascii=False,
+            default=str
+        ),
+        mimetype="application/json",
+        headers={
+            "Content-Disposition":
+            "attachment; filename=ruthelyn_products_backup.json"
+        }
+    )
